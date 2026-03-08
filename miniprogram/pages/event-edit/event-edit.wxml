@@ -16,6 +16,22 @@
       </view>
     </view>
 
+    <!-- Icon picker -->
+    <view class="form-section">
+      <text class="form-label">事件图标（可选）</text>
+      <view class="icon-grid">
+        <view
+          wx:for="{{iconOptions}}"
+          wx:key="index"
+          class="icon-cell {{form.icon === item ? 'icon-selected' : ''}}"
+          bindtap="onIconSelect"
+          data-icon="{{item}}"
+        >
+          <text class="icon-emoji">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
     <!-- Event type -->
     <view class="form-section">
       <text class="form-label">事件类型 <text class="required">*</text></text>

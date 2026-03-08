@@ -90,12 +90,26 @@
       <!-- 事件标题 -->
       <view class="event-header" bindtap="onTapEventName">
         <text class="event-prefix">{{activeTab === 'past' ? '自' : '距离'}}</text>
+        <text class="event-icon" wx:if="{{currentEvent.icon}}">{{currentEvent.icon}}</text>
         <text class="event-name">{{currentEvent.name}}</text>
         <view class="pin-badge" wx:if="{{pinnedEventId && (currentEvent._id === pinnedEventId || currentEvent.id === pinnedEventId)}}">
           <text class="pin-icon">◆</text>
         </view>
         <text class="event-suffix">{{activeTab === 'past' ? '起' : '还有'}}</text>
         <text class="chevron">›</text>
+      </view>
+
+      <!-- 日期信息行 -->
+      <view class="date-info-row">
+        <text class="date-info-text">{{eventDateInfo}}</text>
+      </view>
+
+      <!-- 进度条（仅未来非系统事件） -->
+      <view class="progress-wrap" wx:if="{{activeTab === 'future' && showProgressBar}}">
+        <view class="progress-bar-bg">
+          <view class="progress-bar-fill" style="width: {{progressPercent}}%;"></view>
+        </view>
+        <text class="progress-pct">{{progressPercent}}%</text>
       </view>
 
       <!-- ===== 滑动数字时钟 ===== -->
@@ -159,13 +173,18 @@
       </view>
 
 
+      <!-- 格言滚动文字 -->
+      <view class="motto-area">
+        <text class="motto-text {{mottoVisible ? '' : 'motto-hidden'}}">{{mottoText}}</text>
+      </view>
+
     </block>
 
     <!-- 鸭子装饰大图 -->
     <view class="duck-area">
       <image
         class="duck-image"
-        src="{{activeTab === 'past' ? '/images/tang.png' : '/images/rush.png'}}"
+        src="{{activeTab === 'past' ? '/images/tang.gif' : '/images/rush.gif'}}"
         mode="aspectFit"
       />
     </view>
@@ -190,7 +209,7 @@
         <view class="event-item-main" bindtap="onSelectEvent" data-id="{{item._id || item.id}}">
           <view class="event-type-dot type-{{item.type}}"></view>
           <view class="event-item-info">
-            <text class="event-item-name">{{item.name}}</text>
+            <text class="event-item-name"><text wx:if="{{item.icon}}">{{item.icon}} </text>{{item.name}}</text>
             <text class="event-item-date">{{item.targetDate}} {{item.targetTime || '00:00'}}</text>
           </view>
           <view

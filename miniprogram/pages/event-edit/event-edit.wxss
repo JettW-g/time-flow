@@ -34,6 +34,30 @@
 .textarea-wrap { min-height: 110rpx; }
 .form-textarea { width: 100%; font-size: 27rpx; color: #1A1D2E; background: transparent; min-height: 80rpx; line-height: 1.6; }
 
+/* === Icon grid === */
+.icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  background: #FFFFFF;
+  border: 1rpx solid rgba(0,0,0,0.07);
+  border-radius: 18rpx;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+.icon-cell {
+  width: 72rpx; height: 72rpx;
+  border-radius: 16rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: #F5F7FA;
+  border: 2rpx solid transparent;
+}
+.icon-cell.icon-selected {
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.35);
+}
+.icon-emoji { font-size: 38rpx; line-height: 1; }
+
 /* === Type grid === */
 .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14rpx; }
 

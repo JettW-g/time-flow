@@ -191,9 +191,13 @@ function getNextWeeklyDate(targetDate) {
  */
 function getSystemEvents(offWorkTime = '18:00', holidayMap = {}) {
   const events = [];
+  const now = new Date();
 
   const offWork = getOffWorkTarget(offWorkTime, holidayMap);
   if (offWork) {
+    // 进度起点：当天 00:00
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
     events.push({
       id: 'sys_offwork',
       name: '今天下班',
@@ -202,9 +206,17 @@ function getSystemEvents(offWorkTime = '18:00', holidayMap = {}) {
       targetTime: offWork.time,
       type: 'system',
       isSystem: true,
-      isRecurring: false
+      isRecurring: false,
+      progressStart: formatDate(todayStart) + 'T00:00:00'
     });
   }
+
+  // 进度起点：最近一个周一 00:00
+  const day = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const daysFromMonday = day === 0 ? 6 : day - 1;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - daysFromMonday);
+  monday.setHours(0, 0, 0, 0);
 
   const weekend = getNextWeekendTarget();
   events.push({
@@ -215,7 +227,8 @@ function getSystemEvents(offWorkTime = '18:00', holidayMap = {}) {
     targetTime: weekend.time,
     type: 'system',
     isSystem: true,
-    isRecurring: false
+    isRecurring: false,
+    progressStart: formatDate(monday) + 'T00:00:00'
   });
 
   return events;

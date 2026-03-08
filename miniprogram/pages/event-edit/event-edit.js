@@ -14,8 +14,10 @@ Page({
       calendarType: 'solar',
       isRecurring: false,
       recurringRule: 'yearly',
-      note: ''
+      note: '',
+      icon: ''
     },
+    iconOptions: ['🎂','🎉','✈️','🏖️','🎓','💼','🏠','❤️','⭐','🎵','🏃','🎯','🌟','📅','🎁','🌸','🌙','☀️','🎊','🏆','💪','🔥','🍀','🎈','🍜','🎸','📷','🐶','🌈','🎮'],
     typeOptions: [
       { value: 'custom_once', label: '一次性事件', desc: '到达日期后归档' },
       { value: 'custom_repeat', label: '重复事件', desc: '按自定周期循环' }
@@ -122,7 +124,8 @@ Page({
             calendarType: 'solar', // 日历类型选择已移除，统一公历
             isRecurring: ev.isRecurring || false,
             recurringRule: ev.recurringRule || 'yearly',
-            note: ev.note || ''
+            note: ev.note || '',
+            icon: ev.icon || ''
           }
         });
         this._syncPickerFromDate(ev.targetDate || '');
@@ -149,6 +152,11 @@ Page({
 
   onNoteInput(e) {
     this.setData({ 'form.note': e.detail.value });
+  },
+
+  onIconSelect(e) {
+    const icon = e.currentTarget.dataset.icon;
+    this.setData({ 'form.icon': this.data.form.icon === icon ? '' : icon });
   },
 
   _updateIsPastDate(dateStr) {
@@ -267,6 +275,7 @@ Page({
       isRecurring: form.isRecurring,
       recurringRule: form.isRecurring ? form.recurringRule : null,
       note: form.note.trim(),
+      icon: form.icon || '',
       updatedAt: wx.cloud.database().serverDate()
     };
 

@@ -130,7 +130,7 @@
   flex: 1;
   display: flex; flex-direction: column;
   align-items: center;
-  padding: 48rpx 28rpx 0;
+  padding: 20rpx 28rpx 0;
 }
 
 /* ===== Duck decoration ===== */
@@ -140,7 +140,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16rpx 0 40rpx;
+  padding: 0 0 120rpx;
   min-height: 200rpx;
 }
 
@@ -176,7 +176,7 @@
   flex-wrap: wrap; justify-content: center;
   gap: 12rpx;
   width: 100%;
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
   padding: 22rpx 28rpx;
   background: rgba(255,255,255,0.72);
   border-radius: 24rpx;
@@ -200,6 +200,69 @@
 .pin-badge { display: flex; align-items: center; flex-shrink: 0; }
 .pin-icon  { font-size: 18rpx; color: #6366F1; }
 .chevron   { font-size: 32rpx; color: #CBD5E1; flex-shrink: 0; margin-left: -4rpx; }
+.event-icon { font-size: 36rpx; flex-shrink: 0; }
+
+/* ===== Date info row ===== */
+.date-info-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14rpx;
+  padding: 0 4rpx;
+}
+.date-info-text {
+  font-size: 24rpx;
+  color: #94A3B8;
+  letter-spacing: 1rpx;
+}
+
+/* ===== Progress bar ===== */
+.progress-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 14rpx;
+}
+.progress-bar-bg {
+  flex: 1;
+  height: 8rpx;
+  background: rgba(99,102,241,0.10);
+  border-radius: 100rpx;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366F1, #818CF8);
+  border-radius: 100rpx;
+}
+.progress-pct {
+  font-size: 22rpx;
+  color: #6366F1;
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+/* ===== Motto rolling text ===== */
+.motto-area {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0 0;
+}
+.motto-text {
+  font-size: 26rpx;
+  color: rgba(99,102,241,0.5);
+  letter-spacing: 3rpx;
+  text-align: center;
+  transition: opacity 0.35s ease;
+  opacity: 1;
+}
+.motto-text.motto-hidden { opacity: 0; }
 
 /* ============================================================
    CLOCK DEVICE
