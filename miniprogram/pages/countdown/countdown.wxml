@@ -1,0 +1,213 @@
+<!-- 未来方向：新数字从上方滑入，旧数字向下滑出 -->
+<template name="slideCardDown">
+  <view class="slide-card-wrap">
+    <view class="sc-curr {{flipping ? 'sc-curr-out' : ''}}">
+      <text class="sc-num">{{curr}}</text>
+    </view>
+    <view class="sc-next {{flipping ? 'sc-next-in' : ''}}">
+      <text class="sc-num">{{next}}</text>
+    </view>
+  </view>
+</template>
+
+<!-- 过去方向：新数字从下方滑入，旧数字向上滑出 -->
+<template name="slideCardUp">
+  <view class="slide-card-wrap">
+    <view class="sc-curr {{flipping ? 'sc-curr-out-up' : ''}}">
+      <text class="sc-num">{{curr}}</text>
+    </view>
+    <view class="sc-next {{flipping ? 'sc-next-in-up' : ''}}">
+      <text class="sc-num">{{next}}</text>
+    </view>
+  </view>
+</template>
+
+<view class="page-wrap">
+
+  <!-- 自定义顶部导航栏 -->
+  <view class="top-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-left-stack">
+      <view class="nav-icon-btn" bindtap="onGoProfile">
+        <view class="nav-icon-wrap">
+          <view class="icon-person">
+            <view class="icon-head"></view>
+            <view class="icon-body"></view>
+          </view>
+        </view>
+      </view>
+      <view class="nav-icon-btn" bindtap="onGoCalendar">
+        <view class="nav-icon-wrap">
+          <view class="icon-calendar">
+            <view class="cal-top"></view>
+            <view class="cal-body">
+              <view class="cal-dot"></view>
+              <view class="cal-dot"></view>
+              <view class="cal-dot"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="nav-icon-btn" bindtap="onAddEvent">
+        <view class="nav-icon-wrap">
+          <view class="icon-add">
+            <view class="icon-add-h"></view>
+            <view class="icon-add-v"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <!-- 标签页与导航图标同行 -->
+    <view class="tab-bar">
+      <view class="tab-item {{activeTab === 'past' ? 'tab-active' : ''}}" bindtap="onSwitchTab" data-tab="past">
+        <text class="tab-text">过去</text>
+      </view>
+      <view class="tab-item {{activeTab === 'future' ? 'tab-active' : ''}}" bindtap="onSwitchTab" data-tab="future">
+        <text class="tab-text">未来</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 背景层 -->
+  <view class="bg-base"></view>
+
+  <!-- Loading -->
+  <view wx:if="{{isLoading}}" class="full-screen">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中…</text>
+  </view>
+
+  <view wx:else class="content-wrap">
+
+    <!-- 无事件空状态 -->
+    <view wx:if="{{!currentEvent}}" class="no-event-state">
+      <text class="no-event-icon">{{activeTab === 'past' ? '◎' : '◉'}}</text>
+      <text class="no-event-title">{{activeTab === 'past' ? '暂无历史关注事件' : '暂无未来事件'}}</text>
+      <text class="no-event-desc">{{activeTab === 'past' ? '可在"我的"中添加历史时间点' : '可在"我的"中添加倒计时事件'}}</text>
+    </view>
+
+    <block wx:if="{{currentEvent}}">
+
+      <!-- 事件标题 -->
+      <view class="event-header" bindtap="onTapEventName">
+        <text class="event-prefix">{{activeTab === 'past' ? '自' : '距离'}}</text>
+        <text class="event-name">{{currentEvent.name}}</text>
+        <view class="pin-badge" wx:if="{{pinnedEventId && (currentEvent._id === pinnedEventId || currentEvent.id === pinnedEventId)}}">
+          <text class="pin-icon">◆</text>
+        </view>
+        <text class="event-suffix">{{activeTab === 'past' ? '起' : '还有'}}</text>
+        <text class="chevron">›</text>
+      </view>
+
+      <!-- ===== 滑动数字时钟 ===== -->
+      <view class="flip-clock-device">
+
+        <!-- 未来已来 覆盖层 -->
+        <view wx:if="{{showArrivedOverlay}}" class="arrived-overlay">
+          <text class="arrived-text">未来已来</text>
+        </view>
+
+        <!-- 天 行 -->
+        <view class="clock-section">
+          <view class="digit-row">
+            <view wx:for="{{dayDigits}}" wx:key="index">
+              <template is="{{activeTab === 'past' ? 'slideCardUp' : 'slideCardDown'}}" data="{{...item}}" />
+            </view>
+          </view>
+          <text class="unit-label">天</text>
+        </view>
+
+        <!-- 分割线 -->
+        <view class="section-rule"></view>
+
+        <!-- 时:分:秒 行 -->
+        <view class="clock-section">
+          <view class="hms-row">
+            <view class="digit-group">
+              <view class="digit-row">
+                <view wx:for="{{hDigits}}" wx:key="index">
+                  <template is="{{activeTab === 'past' ? 'slideCardUp' : 'slideCardDown'}}" data="{{...item}}" />
+                </view>
+              </view>
+              <text class="unit-label">时</text>
+            </view>
+            <view class="clock-colon">
+              <view class="colon-dot"></view>
+              <view class="colon-dot"></view>
+            </view>
+            <view class="digit-group">
+              <view class="digit-row">
+                <view wx:for="{{mDigits}}" wx:key="index">
+                  <template is="{{activeTab === 'past' ? 'slideCardUp' : 'slideCardDown'}}" data="{{...item}}" />
+                </view>
+              </view>
+              <text class="unit-label">分</text>
+            </view>
+            <view class="clock-colon">
+              <view class="colon-dot"></view>
+              <view class="colon-dot"></view>
+            </view>
+            <view class="digit-group">
+              <view class="digit-row">
+                <view wx:for="{{sDigits}}" wx:key="index">
+                  <template is="{{activeTab === 'past' ? 'slideCardUp' : 'slideCardDown'}}" data="{{...item}}" />
+                </view>
+              </view>
+              <text class="unit-label">秒</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+
+    </block>
+
+    <!-- 鸭子装饰大图 -->
+    <view class="duck-area">
+      <image
+        class="duck-image"
+        src="{{activeTab === 'past' ? '/images/tang.png' : '/images/rush.png'}}"
+        mode="aspectFit"
+      />
+    </view>
+
+  </view>
+
+  <!-- 事件列表弹层 -->
+  <view class="overlay" wx:if="{{showEventList}}" bindtap="onCloseEventList"></view>
+  <view class="event-list-sheet {{showEventList ? 'show' : ''}}">
+    <view class="sheet-header">
+      <text class="sheet-title">{{activeTab === 'past' ? '历史关注事件' : '未来事件'}}</text>
+      <view class="sheet-close" bindtap="onCloseEventList">
+        <text class="close-icon">×</text>
+      </view>
+    </view>
+    <scroll-view class="sheet-scroll" scroll-y>
+      <view
+        wx:for="{{currentTabEvents}}"
+        wx:key="_key"
+        class="event-list-item {{(item._id === pinnedEventId || item.id === pinnedEventId) ? 'pinned' : ''}}"
+      >
+        <view class="event-item-main" bindtap="onSelectEvent" data-id="{{item._id || item.id}}">
+          <view class="event-type-dot type-{{item.type}}"></view>
+          <view class="event-item-info">
+            <text class="event-item-name">{{item.name}}</text>
+            <text class="event-item-date">{{item.targetDate}} {{item.targetTime || '00:00'}}</text>
+          </view>
+          <view
+            class="pin-btn {{(item._id === pinnedEventId || item.id === pinnedEventId) ? 'pinned' : ''}}"
+            catchtap="onPinEvent"
+            data-id="{{item._id || item.id}}"
+          >
+            <text class="pin-btn-text">{{(item._id === pinnedEventId || item.id === pinnedEventId) ? '已置顶' : '置顶'}}</text>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{currentTabEvents.length === 0}}" class="empty-state">
+        <text class="empty-text">
+          {{activeTab === 'past' ? '暂无历史关注事件，去"我的"添加历史时间点' : '暂无未来事件，去"我的"添加吧'}}
+        </text>
+      </view>
+    </scroll-view>
+  </view>
+
+</view>

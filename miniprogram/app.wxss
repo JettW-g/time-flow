@@ -1,0 +1,145 @@
+/* =============================================
+   TimeFlow — Clean Light UI Design System
+   ============================================= */
+page {
+  /* === Background === */
+  --bg-base: #F5F7FA;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #FAFBFD;
+
+  /* === Brand Gradient (Purple → Blue) === */
+  --brand-from: #7C3AED;
+  --brand-to: #3B82F6;
+  --brand-gradient: linear-gradient(135deg, #7C3AED 0%, #5B21B6 40%, #3B82F6 100%);
+  --brand-glow: rgba(124, 58, 237, 0.2);
+
+  /* === Accent Colors === */
+  --accent-purple: #7C3AED;
+  --accent-blue: #3B82F6;
+  --accent-teal: #0EA5E9;
+  --accent-green: #10B981;
+  --accent-amber: #F59E0B;
+  --accent-red: #EF4444;
+
+  /* === Holiday colors === */
+  --holiday-legal: #EF4444;
+  --holiday-traditional: #3B82F6;
+  --holiday-intl: #8B5CF6;
+  --holiday-user: #0EA5E9;
+
+  /* === Text === */
+  --text-primary: #1A1D2E;
+  --text-secondary: #64748B;
+  --text-tertiary: #94A3B8;
+  --text-brand: #7C3AED;
+
+  /* === Borders & Shadows === */
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-medium: rgba(0, 0, 0, 0.10);
+  --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  --shadow-brand: 0 8rpx 32rpx rgba(124, 58, 237, 0.22);
+  --shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'SF Pro Display', sans-serif;
+}
+
+/* ====== Base Reset ====== */
+view, text, input, picker, textarea { box-sizing: border-box; }
+
+/* ====== White Card ====== */
+.white-card {
+  background: #FFFFFF;
+  border: 1rpx solid var(--border-subtle);
+  border-radius: 24rpx;
+  box-shadow: var(--shadow-card);
+}
+
+/* ====== Gradient Text ====== */
+.gradient-text {
+  background: linear-gradient(135deg, #7C3AED, #3B82F6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ====== Brand Button ====== */
+.btn-brand {
+  background: var(--brand-gradient);
+  border-radius: 20rpx;
+  padding: 28rpx 48rpx;
+  text-align: center;
+  box-shadow: var(--shadow-brand);
+}
+.btn-brand text { font-size: 30rpx; color: #fff; font-weight: 600; }
+
+.btn-ghost {
+  background: rgba(124, 58, 237, 0.06);
+  border: 1rpx solid rgba(124, 58, 237, 0.15);
+  border-radius: 20rpx;
+  padding: 28rpx 48rpx;
+  text-align: center;
+}
+.btn-ghost text { font-size: 30rpx; color: #7C3AED; }
+
+/* ====== Section Label ====== */
+.section-label {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  letter-spacing: 3rpx;
+  font-weight: 500;
+}
+
+/* ====== Divider ====== */
+.divider { height: 1rpx; background: var(--border-subtle); }
+
+/* ====== Tag / Pill ====== */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 18rpx;
+  border-radius: 100rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+.pill-purple { background: rgba(124, 58, 237, 0.08); color: #7C3AED; }
+.pill-blue   { background: rgba(59, 130, 246, 0.08); color: #3B82F6; }
+.pill-teal   { background: rgba(14, 165, 233, 0.08); color: #0EA5E9; }
+.pill-red    { background: rgba(239, 68, 68, 0.08);  color: #EF4444; }
+.pill-amber  { background: rgba(245, 158, 11, 0.08); color: #F59E0B; }
+
+/* ====== Overlay ====== */
+.overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6rpx);
+  z-index: 100;
+}
+
+/* ====== Loading ====== */
+.loading-wrap {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24rpx; padding: 80rpx;
+}
+.spinner {
+  width: 56rpx; height: 56rpx;
+  border: 3rpx solid rgba(124, 58, 237, 0.15);
+  border-top-color: #7C3AED;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 26rpx; color: var(--text-secondary); }
+
+/* ====== Empty State ====== */
+.empty-state {
+  display: flex; flex-direction: column;
+  align-items: center; padding: 100rpx 60rpx; gap: 20rpx;
+}
+.empty-icon { font-size: 96rpx; opacity: 0.2; }
+.empty-title { font-size: 34rpx; font-weight: 600; color: var(--text-primary); }
+.empty-desc { font-size: 26rpx; color: var(--text-secondary); text-align: center; line-height: 1.7; }

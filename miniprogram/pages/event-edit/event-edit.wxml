@@ -1,0 +1,139 @@
+<view class="page-wrap">
+  <scroll-view class="form-scroll" scroll-y>
+
+    <!-- Event name -->
+    <view class="form-section">
+      <text class="form-label">事件名称 <text class="required">*</text></text>
+      <view class="input-wrap">
+        <input
+          class="form-input"
+          placeholder="最多20字，如：我的生日"
+          placeholder-style="color: #455A64;"
+          maxlength="20"
+          value="{{form.name}}"
+          bindinput="onNameInput"
+        />
+      </view>
+    </view>
+
+    <!-- Event type -->
+    <view class="form-section">
+      <text class="form-label">事件类型 <text class="required">*</text></text>
+      <view class="type-grid">
+        <view
+          wx:for="{{typeOptions}}"
+          wx:key="value"
+          class="type-option {{form.type === item.value ? 'selected' : ''}} {{isPastDate && item.value === 'custom_repeat' ? 'disabled' : ''}}"
+          bindtap="onTypeChange"
+          data-type="{{item.value}}"
+        >
+          <text class="type-option-label">{{item.label}}</text>
+          <text class="type-option-desc">{{isPastDate && item.value === 'custom_repeat' ? '过去事件不支持重复' : item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Date picker -->
+    <view class="form-section">
+      <text class="form-label">目标日期 <text class="required">*</text></text>
+      <picker
+        mode="multiSelector"
+        range="{{[years, months, days]}}"
+        value="{{[selectedYearIndex, selectedMonthIndex, selectedDayIndex]}}"
+        bindchange="onDateChange"
+      >
+        <view class="picker-display">
+          <text class="picker-value">{{form.date || '请选择日期'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- Time picker -->
+    <view class="form-section">
+      <text class="form-label">目标时间（可选）</text>
+      <picker
+        mode="multiSelector"
+        range="{{[hours, minutes]}}"
+        value="{{[selectedHourIndex, selectedMinuteIndex]}}"
+        bindchange="onTimeChange"
+      >
+        <view class="picker-display">
+          <text class="picker-value">{{form.time}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- Recurring toggle -->
+    <view class="form-section">
+      <view class="toggle-row">
+        <view class="toggle-info">
+          <text class="form-label">是否循环</text>
+          <text class="toggle-desc">开启后事件到期自动更新到下一周期</text>
+        </view>
+        <switch
+          checked="{{form.isRecurring}}"
+          bindchange="onRecurringToggle"
+          color="#4FC3F7"
+        />
+      </view>
+    </view>
+
+    <!-- Recurring rule -->
+    <view class="form-section" wx:if="{{form.isRecurring}}">
+      <text class="form-label">重复周期</text>
+      <picker
+        mode="selector"
+        range="{{recurringRuleLabels}}"
+        value="{{recurringRules.indexOf(form.recurringRule)}}"
+        bindchange="onRecurringRuleChange"
+      >
+        <view class="picker-display">
+          <text class="picker-value">
+            {{form.recurringRule === 'yearly' ? '每年' : form.recurringRule === 'monthly' ? '每月' : '每周'}}
+          </text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- Note -->
+    <view class="form-section">
+      <text class="form-label">备注（可选）</text>
+      <view class="input-wrap textarea-wrap">
+        <textarea
+          class="form-textarea"
+          placeholder="最多50字"
+          placeholder-style="color: #455A64;"
+          maxlength="50"
+          value="{{form.note}}"
+          bindinput="onNoteInput"
+          auto-height
+        />
+      </view>
+    </view>
+
+    <!-- Rules hint -->
+    <view class="rules-hint">
+      <text class="rules-hint-title">创建规则</text>
+      <view class="rules-hint-item">
+        <text class="rules-hint-dot">·</text>
+        <text class="rules-hint-text">不能创建起始时间距今超过 1 年的事件</text>
+      </view>
+    </view>
+
+    <!-- Bottom spacing -->
+    <view style="height: 200rpx;"></view>
+  </scroll-view>
+
+  <!-- Bottom action bar -->
+  <view class="action-bar">
+    <view class="btn-cancel" bindtap="onCancel">
+      <text class="btn-cancel-text">取消</text>
+    </view>
+    <view class="btn-submit {{isSubmitting ? 'submitting' : ''}}" bindtap="onSubmit">
+      <text class="btn-submit-text">{{isSubmitting ? '保存中...' : (mode === 'edit' ? '保存修改' : '添加事件')}}</text>
+    </view>
+  </view>
+</view>

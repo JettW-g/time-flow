@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/countdown/countdown",
+    "pages/calendar/calendar",
+    "pages/profile/profile",
+    "pages/event-edit/event-edit"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTitleText": "",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F5F7FA",
+    "backgroundTextStyle": "dark"
+  },
+  "cloud": true,
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

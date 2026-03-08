@@ -1,0 +1,9 @@
+{
+  "name": "refreshRecurring",
+  "version": "1.0.0",
+  "description": "定时刷新循环事件的目标日期（每日凌晨2点执行）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

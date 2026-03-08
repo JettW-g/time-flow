@@ -1,0 +1,276 @@
+<view class="page-wrap" bindtap="onCloseSwipe">
+
+  <!-- User info header -->
+  <view class="user-header">
+    <view class="user-avatar-wrap">
+      <button
+        class="avatar-btn"
+        open-type="chooseAvatar"
+        bindchooseavatar="onChooseAvatar"
+      >
+        <image
+          wx:if="{{userInfo && userInfo.avatarUrl}}"
+          src="{{userInfo.avatarUrl}}"
+          class="user-avatar"
+          mode="aspectFill"
+        />
+        <view wx:else class="avatar-placeholder">
+          <text class="avatar-placeholder-text">头像</text>
+        </view>
+      </button>
+      <view class="avatar-glow"></view>
+    </view>
+
+    <view class="user-info">
+      <!-- 展示模式 -->
+      <view wx:if="{{!editingName}}" class="name-display-row" bindtap="onEditName">
+        <text class="user-name">{{userInfo && userInfo.nickName ? userInfo.nickName : '点击设置昵称'}}</text>
+        <text class="name-edit-icon">✎</text>
+      </view>
+
+      <!-- 编辑模式 -->
+      <view wx:else class="name-edit-wrap" catchtap="">
+        <input
+          class="name-input"
+          type="nickname"
+          placeholder="输入昵称，或选择微信昵称"
+          placeholder-class="name-placeholder"
+          value="{{tempName}}"
+          bindinput="onNameInput"
+          focus="{{editingName}}"
+          maxlength="20"
+        />
+        <view class="name-btn-row">
+          <view class="name-btn-cancel" bindtap="onCancelEditName">
+            <text class="name-btn-text">取消</text>
+          </view>
+          <view class="name-btn-save" bindtap="onSaveName">
+            <text class="name-btn-text name-btn-save-text">保存</text>
+          </view>
+        </view>
+      </view>
+
+      <text class="user-subtitle">{{totalCount}} 个事件</text>
+    </view>
+
+    <view class="settings-btn" bindtap="onOpenSettings">
+      <text class="settings-icon">⚙</text>
+    </view>
+  </view>
+
+  <!-- Stats row -->
+  <view class="stats-row" wx:if="{{totalCount > 0}}">
+    <view class="stat-item">
+      <text class="stat-num">{{totalCount}}</text>
+      <text class="stat-label">全部</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{activeCount}}</text>
+      <text class="stat-label">进行中</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{archivedCount}}</text>
+      <text class="stat-label">已归档</text>
+    </view>
+  </view>
+
+  <!-- Loading -->
+  <view wx:if="{{isLoading}}" class="loading-wrap">
+    <view class="loading-spinner"></view>
+  </view>
+
+  <block wx:elif="{{totalCount > 0}}">
+
+    <!-- ── 进行中 ── -->
+    <view class="section-header">
+      <view class="section-title-wrap">
+        <view class="section-status-dot dot-active"></view>
+        <text class="section-title">进行中</text>
+        <text class="section-count">{{activeCount}}</text>
+      </view>
+      <text class="section-hint">左滑编辑/删除</text>
+    </view>
+
+    <view wx:if="{{activeEvents.length > 0}}" class="events-list">
+      <view
+        wx:for="{{activeEvents}}"
+        wx:key="_id"
+        class="event-item-wrap"
+        catchtap="onSwipeEvent"
+        data-id="{{item._id}}"
+      >
+        <view class="swipe-actions">
+          <view class="swipe-edit" catchtap="onEditEvent" data-id="{{item._id}}">
+            <text class="swipe-action-text">编辑</text>
+          </view>
+          <view class="swipe-delete" catchtap="onDeleteEventConfirm" data-id="{{item._id}}" data-name="{{item.name}}">
+            <text class="swipe-action-text">删除</text>
+          </view>
+        </view>
+        <view class="event-card {{item.swipeOpen ? 'swiped' : ''}}">
+          <view class="event-card-left">
+            <view class="event-type-bar type-{{item.type}}"></view>
+            <view class="event-card-content">
+              <view class="event-card-top">
+                <text class="event-card-name">{{item.name}}</text>
+                <view class="event-tags">
+                  <text class="event-tag-direction {{item.wasOriginallyPast ? 'tag-past' : 'tag-future'}}">{{item.wasOriginallyPast ? '过去事件' : '未来事件'}}</text>
+                  <text wx:if="{{item.isRecurring}}" class="event-tag-recurring">循环</text>
+                </view>
+              </view>
+              <view class="event-card-bottom">
+                <text class="event-card-date">{{item.targetDate}} {{item.targetTime || ''}}</text>
+                <text wx:if="{{item.anniversaryText}}" class="anniversary-text">{{item.anniversaryText}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="event-countdown-badge {{item.wasOriginallyPast ? 'past-event' : (item.daysRemaining === 0 ? 'today' : '')}}">
+            <text class="event-days-text">{{item.daysText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="section-empty">
+      <text class="section-empty-text">暂无进行中的事件</text>
+    </view>
+
+    <!-- ── 已归档 ── -->
+    <view wx:if="{{archivedEvents.length > 0}}">
+      <view class="section-header section-header-archived">
+        <view class="section-title-wrap">
+          <view class="section-status-dot dot-archived"></view>
+          <text class="section-title">已归档</text>
+          <text class="section-count">{{archivedCount}}</text>
+        </view>
+      </view>
+
+      <!-- 已归档 · 未来事件（含循环） -->
+      <view wx:if="{{archivedFutureEvents.length > 0}}">
+        <view class="archived-sub-header">
+          <text class="archived-sub-label">未来事件</text>
+        </view>
+        <view class="events-list">
+          <view
+            wx:for="{{archivedFutureEvents}}"
+            wx:key="_id"
+            class="event-item-wrap"
+            catchtap="onSwipeEvent"
+            data-id="{{item._id}}"
+          >
+            <view class="swipe-actions">
+              <view class="swipe-edit" catchtap="onEditEvent" data-id="{{item._id}}">
+                <text class="swipe-action-text">编辑</text>
+              </view>
+              <view class="swipe-delete" catchtap="onDeleteEventConfirm" data-id="{{item._id}}" data-name="{{item.name}}">
+                <text class="swipe-action-text">删除</text>
+              </view>
+            </view>
+            <view class="event-card {{item.swipeOpen ? 'swiped' : ''}} expired">
+              <view class="event-card-left">
+                <view class="event-type-bar type-{{item.type}}"></view>
+                <view class="event-card-content">
+                  <view class="event-card-top">
+                    <text class="event-card-name">{{item.name}}</text>
+                    <view class="event-tags">
+                      <text class="event-tag-direction tag-future">未来事件</text>
+                      <text wx:if="{{item.isRecurring}}" class="event-tag-recurring">循环</text>
+                    </view>
+                  </view>
+                  <view class="event-card-bottom">
+                    <text class="event-card-date">{{item.targetDate}} {{item.targetTime || ''}}</text>
+                  </view>
+                </view>
+              </view>
+              <view class="event-countdown-badge expired">
+                <text class="event-days-text">{{item.daysText}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 已归档 · 过去事件 -->
+      <view wx:if="{{archivedPastEvents.length > 0}}">
+        <view class="archived-sub-header">
+          <text class="archived-sub-label">过去事件</text>
+        </view>
+        <view class="events-list">
+          <view
+            wx:for="{{archivedPastEvents}}"
+            wx:key="_id"
+            class="event-item-wrap"
+            catchtap="onSwipeEvent"
+            data-id="{{item._id}}"
+          >
+            <view class="swipe-actions">
+              <view class="swipe-edit" catchtap="onEditEvent" data-id="{{item._id}}">
+                <text class="swipe-action-text">编辑</text>
+              </view>
+              <view class="swipe-delete" catchtap="onDeleteEventConfirm" data-id="{{item._id}}" data-name="{{item.name}}">
+                <text class="swipe-action-text">删除</text>
+              </view>
+            </view>
+            <view class="event-card {{item.swipeOpen ? 'swiped' : ''}} expired">
+              <view class="event-card-left">
+                <view class="event-type-bar type-{{item.type}}"></view>
+                <view class="event-card-content">
+                  <view class="event-card-top">
+                    <text class="event-card-name">{{item.name}}</text>
+                    <view class="event-tags">
+                      <text class="event-tag-direction tag-past">过去事件</text>
+                    </view>
+                  </view>
+                  <view class="event-card-bottom">
+                    <text class="event-card-date">{{item.targetDate}} {{item.targetTime || ''}}</text>
+                  </view>
+                </view>
+              </view>
+              <view class="event-countdown-badge past-event">
+                <text class="event-days-text">{{item.daysText}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+    </view>
+
+  </block>
+
+  <!-- Empty state -->
+  <view wx:elif="{{!isLoading}}" class="empty-state">
+    <text class="empty-icon-large">⏳</text>
+    <text class="empty-title">还没有事件</text>
+    <text class="empty-subtitle">点击下方按钮，添加你的第一个倒计时事件</text>
+    <view class="empty-add-btn" bindtap="onAddEvent">
+      <text class="empty-add-text">+ 添加事件</text>
+    </view>
+  </view>
+
+  <!-- Floating add button -->
+  <view class="fab" bindtap="onAddEvent" wx:if="{{totalCount > 0}}">
+    <text class="fab-icon">+</text>
+    <view class="fab-glow"></view>
+  </view>
+
+  <!-- Delete confirm dialog -->
+  <view class="overlay" wx:if="{{showDeleteConfirm}}"></view>
+  <view class="confirm-dialog" wx:if="{{showDeleteConfirm}}">
+    <view class="confirm-content">
+      <text class="confirm-title">删除事件</text>
+      <text class="confirm-message">确定要删除「{{pendingDeleteName}}」吗？此操作不可撤销。</text>
+      <view class="confirm-actions">
+        <view class="confirm-cancel" bindtap="onCancelDelete">
+          <text class="confirm-cancel-text">取消</text>
+        </view>
+        <view class="confirm-ok" bindtap="onConfirmDelete">
+          <text class="confirm-ok-text">删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view style="height: 120rpx;"></view>
+</view>

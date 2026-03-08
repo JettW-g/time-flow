@@ -1,0 +1,452 @@
+/* ============================================================
+   Countdown — Modern Tech Slide Display
+   ============================================================ */
+
+/* ===== Page ===== */
+.page-wrap {
+  min-height: 100vh;
+  background: #F0F4FF;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bg-base {
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(99,102,241,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 100% 80%, rgba(59,130,246,0.08) 0%, transparent 55%),
+    linear-gradient(180deg, #EEF2FF 0%, #F5F7FF 60%, #EDF2FB 100%);
+  z-index: 0;
+}
+
+/* ===== Top Nav ===== */
+.top-nav {
+  position: relative; z-index: 10;
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-left: 20rpx; padding-right: 20rpx; padding-bottom: 12rpx;
+  background: rgba(240, 244, 255, 0.88);
+  backdrop-filter: blur(20rpx);
+}
+.nav-icon-btn {
+  width: 80rpx; height: 80rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-icon-wrap {
+  width: 68rpx; height: 68rpx;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2rpx 10rpx rgba(99,102,241,0.12);
+  border: 1rpx solid rgba(99,102,241,0.1);
+}
+.nav-left-stack {
+  display: flex; flex-direction: column; gap: 10rpx;
+}
+.icon-person { display: flex; flex-direction: column; align-items: center; gap: 3rpx; }
+.icon-head { width: 18rpx; height: 18rpx; border-radius: 50%; background: #6366F1; }
+.icon-body { width: 28rpx; height: 16rpx; background: #6366F1; border-radius: 14rpx 14rpx 0 0; }
+
+.icon-add { position: relative; width: 28rpx; height: 28rpx; }
+.icon-add-h {
+  position: absolute; top: 50%; left: 0; right: 0;
+  height: 3rpx; border-radius: 2rpx; background: #6366F1;
+  transform: translateY(-50%);
+}
+.icon-add-v {
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 3rpx; border-radius: 2rpx; background: #6366F1;
+  transform: translateX(-50%);
+}
+
+.icon-calendar { display: flex; flex-direction: column; align-items: center; gap: 2rpx; }
+.cal-top { width: 30rpx; height: 8rpx; background: #6366F1; border-radius: 3rpx 3rpx 0 0; }
+.cal-body {
+  width: 30rpx; height: 22rpx; background: #6366F1;
+  border-radius: 0 0 4rpx 4rpx;
+  display: flex; align-items: center; justify-content: center; gap: 4rpx;
+}
+.cal-dot { width: 5rpx; height: 5rpx; border-radius: 50%; background: #F0F4FF; }
+
+/* ============================================================
+   TAB BAR — 鸭子图标导航（内嵌于 top-nav 右侧）
+   ============================================================ */
+
+.tab-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 24rpx;
+  padding-right: 8rpx;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 4rpx;
+}
+
+.tab-text {
+  font-size: 36rpx;
+  color: rgba(148, 163, 184, 0.75);
+  font-weight: 400;
+  letter-spacing: 4rpx;
+  transition: font-size 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-active .tab-text {
+  font-size: 46rpx;
+  color: #6366F1;
+  font-weight: 700;
+}
+
+/* ===== Loading ===== */
+.full-screen {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 24rpx;
+}
+.loading-spinner {
+  width: 56rpx; height: 56rpx;
+  border: 3rpx solid rgba(99,102,241,0.15);
+  border-top-color: #6366F1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 26rpx; color: #94A3B8; }
+
+/* ===== Content ===== */
+.content-wrap {
+  position: relative; z-index: 1;
+  width: 100%;
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 48rpx 28rpx 0;
+}
+
+/* ===== Duck decoration ===== */
+.duck-area {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 0 40rpx;
+  min-height: 200rpx;
+}
+
+.duck-image {
+  width: 620rpx;
+  height: 620rpx;
+  opacity: 0.9;
+}
+
+/* ===== No Event State ===== */
+.no-event-state {
+  margin-top: 100rpx;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20rpx;
+  padding: 60rpx 40rpx;
+  background: rgba(255,255,255,0.6);
+  border-radius: 32rpx;
+  border: 1rpx solid rgba(99,102,241,0.1);
+}
+.no-event-icon {
+  font-size: 72rpx; color: rgba(99,102,241,0.3);
+}
+.no-event-title {
+  font-size: 30rpx; font-weight: 600; color: #475569;
+}
+.no-event-desc {
+  font-size: 24rpx; color: #94A3B8; text-align: center; line-height: 1.6;
+}
+
+/* ===== Event Header ===== */
+.event-header {
+  display: flex; flex-direction: row; align-items: center;
+  flex-wrap: wrap; justify-content: center;
+  gap: 12rpx;
+  width: 100%;
+  margin-bottom: 20rpx;
+  padding: 22rpx 28rpx;
+  background: rgba(255,255,255,0.72);
+  border-radius: 24rpx;
+  border: 1rpx solid rgba(99,102,241,0.12);
+  box-shadow:
+    0 0 0 1rpx rgba(255,255,255,0.8) inset,
+    0 4rpx 16rpx rgba(99,102,241,0.07);
+  backdrop-filter: blur(8rpx);
+}
+.event-prefix,
+.event-suffix {
+  font-size: 30rpx; font-weight: 400; color: #64748B;
+  letter-spacing: 2rpx; flex-shrink: 0;
+}
+.event-name {
+  font-size: 40rpx; font-weight: 800; color: #6366F1;
+  letter-spacing: -0.5rpx;
+  max-width: 380rpx;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pin-badge { display: flex; align-items: center; flex-shrink: 0; }
+.pin-icon  { font-size: 18rpx; color: #6366F1; }
+.chevron   { font-size: 32rpx; color: #CBD5E1; flex-shrink: 0; margin-left: -4rpx; }
+
+/* ============================================================
+   CLOCK DEVICE
+   ============================================================ */
+
+.flip-clock-device {
+  position: relative;
+  background: rgba(255,255,255,0.75);
+  border-radius: 32rpx;
+  padding: 44rpx 36rpx 36rpx;
+  border: 1rpx solid rgba(99,102,241,0.15);
+  box-shadow:
+    0 0 0 1rpx rgba(255,255,255,0.8) inset,
+    0 16rpx 48rpx rgba(99,102,241,0.12),
+    0 4rpx 16rpx rgba(0,0,0,0.04);
+  backdrop-filter: blur(12rpx);
+  width: 100%;
+}
+
+.clock-section {
+  display: flex; flex-direction: column; align-items: center; gap: 12rpx;
+}
+
+.section-rule {
+  width: 100%; height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.15), transparent);
+  margin: 24rpx 0;
+}
+
+.digit-row { display: flex; flex-direction: row; gap: 10rpx; }
+
+.unit-label {
+  font-size: 20rpx; font-weight: 700;
+  color: rgba(99,102,241,0.45);
+  letter-spacing: 6rpx;
+  text-transform: uppercase;
+}
+
+.hms-row {
+  display: flex; flex-direction: row;
+  align-items: flex-start;
+}
+.digit-group {
+  display: flex; flex-direction: column; align-items: center; gap: 10rpx;
+}
+
+.clock-colon {
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 18rpx;
+  padding: 0 14rpx;
+  margin-bottom: 32rpx;
+  height: 128rpx;
+}
+.colon-dot {
+  width: 9rpx; height: 9rpx; border-radius: 50%;
+  background: #6366F1;
+  animation: colon-blink 1s step-end infinite;
+}
+@keyframes colon-blink {
+  0%, 100% { opacity: 0.65; }
+  50%       { opacity: 0.12; }
+}
+
+/* ============================================================
+   SLIDE CARD — vertical slide animations
+   支持两个方向：
+     down (未来)：新数字从上方滑入，旧数字向下滑出
+     up   (过去)：新数字从下方滑入，旧数字向上滑出
+   ============================================================ */
+
+.slide-card-wrap {
+  position: relative;
+  width: 84rpx;
+  height: 128rpx;
+  overflow: hidden;
+  border-radius: 14rpx;
+  background: #FFFFFF;
+  border: 1rpx solid rgba(99,102,241,0.14);
+  box-shadow:
+    0 0 0 1rpx rgba(255,255,255,0.9) inset,
+    0 4rpx 16rpx rgba(99,102,241,0.1);
+}
+
+/* ── Current number ── */
+.sc-curr {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #FFFFFF;
+}
+
+/* 未来：旧数字向下滑出 */
+.sc-curr.sc-curr-out {
+  animation: slide-out-down 0.28s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes slide-out-down {
+  0%   { transform: translateY(0);    opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+/* 过去：旧数字向上滑出 */
+.sc-curr.sc-curr-out-up {
+  animation: slide-out-up 0.28s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes slide-out-up {
+  0%   { transform: translateY(0);     opacity: 1; }
+  100% { transform: translateY(-100%); opacity: 0; }
+}
+
+/* ── Next number ── */
+.sc-next {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #FFFFFF;
+  opacity: 0;
+}
+
+/* 未来：新数字从上方滑入 */
+.sc-next {
+  transform: translateY(-100%);
+}
+.sc-next.sc-next-in {
+  animation: slide-in-down 0.28s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+@keyframes slide-in-down {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateY(0);     opacity: 1; }
+}
+
+/* 过去：新数字从下方滑入 */
+.sc-next.sc-next-in-up {
+  animation: slide-in-up 0.28s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+@keyframes slide-in-up {
+  0%   { transform: translateY(100%); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+
+/* Number text */
+.sc-num {
+  font-size: 88rpx;
+  font-weight: 800;
+  color: #1E1B4B;
+  font-family: 'SF Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+  letter-spacing: -3rpx;
+  line-height: 1;
+}
+
+/* Subtle mid-line accent */
+.slide-card-wrap::after {
+  content: '';
+  position: absolute;
+  top: 63rpx; left: 8rpx; right: 8rpx;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.1), transparent);
+  pointer-events: none;
+}
+
+/* ===== "未来已来" overlay ===== */
+.arrived-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8rpx);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: arrived-fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.arrived-text {
+  font-size: 64rpx;
+  font-weight: 900;
+  color: #6366F1;
+  letter-spacing: 8rpx;
+  text-shadow: 0 2rpx 16rpx rgba(99, 102, 241, 0.25);
+}
+@keyframes arrived-fade-in {
+  0%   { opacity: 0; transform: scale(0.88); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ===== Event list sheet ===== */
+.event-list-sheet {
+  position: fixed; bottom: -100%; left: 0; right: 0;
+  max-height: 72vh;
+  background: #FFFFFF;
+  border-radius: 32rpx 32rpx 0 0;
+  border-top: 1rpx solid rgba(0,0,0,0.06);
+  box-shadow: 0 -8rpx 40rpx rgba(0,0,0,0.1);
+  z-index: 200;
+  transition: bottom 0.38s cubic-bezier(0.32,0.72,0,1);
+  display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.event-list-sheet.show { bottom: 0; }
+
+.sheet-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 32rpx 40rpx 24rpx;
+  border-bottom: 1rpx solid rgba(0,0,0,0.05);
+}
+.sheet-title { font-size: 32rpx; font-weight: 700; color: #1E1B4B; }
+.sheet-close {
+  width: 56rpx; height: 56rpx; border-radius: 50%;
+  background: #F5F7FA;
+  display: flex; align-items: center; justify-content: center;
+}
+.close-icon { font-size: 34rpx; color: #64748B; line-height: 1; }
+
+.sheet-scroll { flex: 1; max-height: 58vh; }
+
+.event-list-item { border-bottom: 1rpx solid rgba(0,0,0,0.04); }
+.event-list-item.pinned { background: rgba(99,102,241,0.04); }
+
+.event-item-main {
+  display: flex; align-items: center;
+  padding: 26rpx 40rpx; gap: 20rpx;
+}
+.event-type-dot {
+  width: 10rpx; height: 10rpx; border-radius: 50%; flex-shrink: 0;
+}
+.type-system       { background: #0EA5E9; }
+.type-birthday     { background: #EF4444; }
+.type-anniversary  { background: #8B5CF6; }
+.type-custom_once  { background: #10B981; }
+.type-custom_repeat{ background: #F59E0B; }
+
+.event-item-info { flex: 1; display: flex; flex-direction: column; gap: 5rpx; }
+.event-item-name { font-size: 30rpx; color: #1E1B4B; font-weight: 500; }
+.event-item-date { font-size: 23rpx; color: #94A3B8; }
+
+.pin-btn {
+  padding: 10rpx 24rpx; border-radius: 100rpx;
+  border: 1rpx solid rgba(99,102,241,0.2);
+  background: transparent;
+}
+.pin-btn.pinned { background: rgba(99,102,241,0.08); border-color: #6366F1; }
+.pin-btn-text   { font-size: 23rpx; color: #6366F1; }
+
+.empty-state  { padding: 60rpx 40rpx; text-align: center; }
+.empty-text   { font-size: 28rpx; color: #94A3B8; }
+
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(6rpx); z-index: 100;
+}

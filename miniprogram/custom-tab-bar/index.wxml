@@ -1,0 +1,43 @@
+<view class="tab-bar">
+  <view class="tab-bar-border"></view>
+  <view
+    wx:for="{{tabs}}"
+    wx:key="pagePath"
+    class="tab-bar-item {{selected === index ? 'active' : ''}}"
+    bindtap="switchTab"
+    data-index="{{index}}"
+  >
+    <!-- Countdown icon -->
+    <view wx:if="{{index === 0}}" class="tab-icon">
+      <view class="icon-hourglass {{selected === 0 ? 'active' : ''}}">
+        <view class="hourglass-top"></view>
+        <view class="hourglass-mid"></view>
+        <view class="hourglass-bot"></view>
+      </view>
+    </view>
+
+    <!-- Calendar icon -->
+    <view wx:if="{{index === 1}}" class="tab-icon">
+      <view class="icon-calendar {{selected === 1 ? 'active' : ''}}">
+        <view class="cal-top">
+          <view class="cal-dot"></view>
+          <view class="cal-dot"></view>
+        </view>
+        <view class="cal-body">
+          <view class="cal-line"></view>
+          <view class="cal-line short"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Profile icon -->
+    <view wx:if="{{index === 2}}" class="tab-icon">
+      <view class="icon-profile {{selected === 2 ? 'active' : ''}}">
+        <view class="profile-head"></view>
+        <view class="profile-body"></view>
+      </view>
+    </view>
+
+    <text class="tab-text">{{item.text}}</text>
+  </view>
+</view>

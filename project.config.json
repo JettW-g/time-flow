@@ -1,0 +1,83 @@
+{
+  "appid": "wx7a215495fb8d4a1b",
+  "compileType": "miniprogram",
+  "libVersion": "3.3.4",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "coverView": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "preloadBackgroundData": false,
+    "minified": true,
+    "newFeature": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "useIsolateContext": true,
+    "nodeModules": true,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "ignoreUploadUnusedFiles": true,
+    "enableEngineNative": false,
+    "bundle": false,
+    "useCompilerModule": true,
+    "userConfirmedBundleSwitch": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "compileWorklet": false,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
+  },
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
+  "cloudbaseRoot": "cloudfunctions/",
+  "simulatorPluginLibVersion": {},
+  "cloudfunctionIdList": [
+    {
+      "name": "login",
+      "envId": "cloud1-7gqgfcq3682191c1"
+    },
+    {
+      "name": "getHolidays",
+      "envId": "cloud1-7gqgfcq3682191c1"
+    },
+    {
+      "name": "syncEvents",
+      "envId": "cloud1-7gqgfcq3682191c1"
+    },
+    {
+      "name": "updateHolidays",
+      "envId": "cloud1-7gqgfcq3682191c1"
+    },
+    {
+      "name": "refreshRecurring",
+      "envId": "cloud1-7gqgfcq3682191c1"
+    }
+  ]
+}
