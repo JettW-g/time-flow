@@ -184,7 +184,7 @@
     <view class="duck-area">
       <image
         class="duck-image"
-        src="{{activeTab === 'past' ? '/images/tang.gif' : '/images/rush.gif'}}"
+        src="{{activeTab === 'past' ? 'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/tang.gif' : 'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/rush.gif'}}"
         mode="aspectFit"
       />
     </view>
