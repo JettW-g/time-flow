@@ -42,6 +42,8 @@ Page({
     progressPercent: 0,
     mottoText: '',
     mottoVisible: false,
+    rushGifUrl: '',
+    tangGifUrl: '',
 
     // ── Digit flip cards ───────────────────────────────
     dayDigits: [emptyDigit(), emptyDigit(), emptyDigit()],
@@ -64,6 +66,26 @@ Page({
     const { statusBarHeight } = wx.getSystemInfoSync();
     this.setData({ statusBarHeight });
     this._initHolidays();
+    this._loadGifUrls();
+  },
+
+  _loadGifUrls() {
+    wx.cloud.getTempFileURL({
+      fileList: [
+        'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/rush.gif',
+        'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/tang.gif'
+      ],
+      success: res => {
+        const list = res.fileList;
+        const rush = list.find(f => f.fileID.includes('rush.gif'));
+        const tang = list.find(f => f.fileID.includes('tang.gif'));
+        this.setData({
+          rushGifUrl: rush && rush.tempFileURL || '',
+          tangGifUrl: tang && tang.tempFileURL || ''
+        });
+      },
+      fail: err => console.error('getTempFileURL fail:', err)
+    });
   },
 
   onShow() {
