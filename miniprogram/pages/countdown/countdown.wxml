@@ -59,10 +59,10 @@
     <!-- 标签页与导航图标同行 -->
     <view class="tab-bar">
       <view class="tab-item {{activeTab === 'past' ? 'tab-active' : ''}}" bindtap="onSwitchTab" data-tab="past">
-        <text class="tab-text">过去</text>
+        <text class="tab-text">过往云烟</text>
       </view>
       <view class="tab-item {{activeTab === 'future' ? 'tab-active' : ''}}" bindtap="onSwitchTab" data-tab="future">
-        <text class="tab-text">未来</text>
+        <text class="tab-text">未来可期</text>
       </view>
     </view>
   </view>
@@ -89,13 +89,12 @@
 
       <!-- 事件标题 -->
       <view class="event-header" bindtap="onTapEventName">
-        <text class="event-prefix">{{activeTab === 'past' ? '自' : '距离'}}</text>
         <text class="event-icon" wx:if="{{currentEvent.icon}}">{{currentEvent.icon}}</text>
         <text class="event-name">{{currentEvent.name}}</text>
         <view class="pin-badge" wx:if="{{pinnedEventId && (currentEvent._id === pinnedEventId || currentEvent.id === pinnedEventId)}}">
           <text class="pin-icon">◆</text>
         </view>
-        <text class="event-suffix">{{activeTab === 'past' ? '起' : '还有'}}</text>
+        <text class="event-suffix">{{activeTab === 'past' ? ' 已过去' : ' 倒计时'}}</text>
         <text class="chevron">›</text>
       </view>
 

@@ -93,7 +93,7 @@
 }
 
 .tab-text {
-  font-size: 36rpx;
+  font-size: 30rpx;
   color: rgba(148, 163, 184, 0.75);
   font-weight: 400;
   letter-spacing: 4rpx;
@@ -186,20 +186,21 @@
     0 4rpx 16rpx rgba(99,102,241,0.07);
   backdrop-filter: blur(8rpx);
 }
-.event-prefix,
 .event-suffix {
-  font-size: 30rpx; font-weight: 400; color: #64748B;
+  font-size: 36rpx; font-weight: 900; color: #64748B;
+  font-family: 'Heiti SC', 'STHeiti', 'PingFang SC', sans-serif;
   letter-spacing: 2rpx; flex-shrink: 0;
 }
 .event-name {
-  font-size: 40rpx; font-weight: 800; color: #6366F1;
-  letter-spacing: -0.5rpx;
-  max-width: 380rpx;
+  font-size: 48rpx; font-weight: 900; color: #6366F1;
+  font-family: 'Heiti SC', 'STHeiti', 'PingFang SC', sans-serif;
+  letter-spacing: 1rpx;
+  max-width: 400rpx;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .pin-badge { display: flex; align-items: center; flex-shrink: 0; }
 .pin-icon  { font-size: 18rpx; color: #6366F1; }
-.chevron   { font-size: 32rpx; color: #CBD5E1; flex-shrink: 0; margin-left: -4rpx; }
+.chevron   { font-size: 36rpx; color: #CBD5E1; flex-shrink: 0; margin-left: -4rpx; }
 .event-icon { font-size: 36rpx; flex-shrink: 0; }
 
 /* ===== Date info row ===== */
