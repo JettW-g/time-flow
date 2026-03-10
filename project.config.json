@@ -3,7 +3,9 @@
   "compileType": "miniprogram",
   "libVersion": "3.3.4",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "glob", "value": "miniprogram/images/**" }
+    ],
     "include": []
   },
   "setting": {
