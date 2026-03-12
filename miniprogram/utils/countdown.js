@@ -62,22 +62,23 @@ function padZero(n) {
  * - 周五 18:00 之后、周六、周日：返回已过去的本周五 18:00（倒计时显示 0）
  * @returns {{ date: string, time: string, label: string }}
  */
-function getNextWeekendTarget() {
+function getNextWeekendTarget(weekendTime = '18:00') {
   const now = new Date();
   const day = now.getDay();
+  const [wh, wm] = weekendTime.split(':').map(Number);
   let daysUntilFri;
   if (day < 5) {
     daysUntilFri = 5 - day;
   } else if (day === 5) {
-    const fri18 = new Date(now); fri18.setHours(18,0,0,0);
-    daysUntilFri = now >= fri18 ? 7 : 0;
+    const friTarget = new Date(now); friTarget.setHours(wh, wm, 0, 0);
+    daysUntilFri = now >= friTarget ? 7 : 0;
   } else {
     daysUntilFri = 5 + 7 - day;
   }
   const friday = new Date(now);
   friday.setDate(now.getDate() + daysUntilFri);
-  friday.setHours(18, 0, 0, 0);
-  return { date: formatDate(friday), time: '18:00' };
+  friday.setHours(wh, wm, 0, 0);
+  return { date: formatDate(friday), time: weekendTime };
 }
 
 /**
@@ -223,7 +224,7 @@ function calcYearsMonthsDays(totalDays) {
  * @param {Object} holidayMap
  * @returns {Array<{id, name, label, targetDate, targetTime, type, isSystem}>}
  */
-function getSystemEvents(offWorkTime = '18:00', holidayMap = {}) {
+function getSystemEvents(offWorkTime = '18:00', holidayMap = {}, weekendTime = '18:00') {
   const events = [];
   const now = new Date();
 
@@ -235,7 +236,7 @@ function getSystemEvents(offWorkTime = '18:00', holidayMap = {}) {
   }
 
   // 周末
-  const weekend = getNextWeekendTarget();
+  const weekend = getNextWeekendTarget(weekendTime);
   const day = now.getDay();
   const daysFromMonday = day === 0 ? 6 : day - 1;
   const monday = new Date(now); monday.setDate(now.getDate() - daysFromMonday); monday.setHours(0,0,0,0);

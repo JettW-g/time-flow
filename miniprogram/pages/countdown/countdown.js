@@ -75,6 +75,7 @@ Page({
     quickEditEventId: null,
     quickEditDate: '',
     quickEditTime: '00:00',
+    quickEditTimeOnly: false,
     // Retirement sheet
     showRetireSheet: false,
     retireBirthYear: '',
@@ -248,7 +249,7 @@ Page({
     const self = this;
     const settings = app.globalData.settings || {};
     const pinnedEventId = app.globalData.pinnedEventId;
-    const systemEvents = getSystemEvents(settings.offWorkTime || '18:00', this._holidayMap);
+    const systemEvents = getSystemEvents(settings.offWorkTime || '18:00', this._holidayMap, settings.weekendTime || '18:00');
 
     this._fetchUserEvents().then(userEvents => {
       const now = new Date();
@@ -622,10 +623,11 @@ Page({
   // Quick time edit
   onQuickEditTime(e) {
     const { id, date, time } = e.currentTarget.dataset;
+    const timeOnly = id === 'sys_offwork' || id === 'sys_weekend';
     const now = new Date();
     const minDate = `${now.getFullYear() - 100}-01-01`;
     const maxDate = `${now.getFullYear() + 20}-12-31`;
-    this.setData({ showQuickEdit: true, quickEditEventId: id, quickEditDate: date, quickEditTime: time || '00:00', pickerMinDate: minDate, pickerMaxDate: maxDate });
+    this.setData({ showQuickEdit: true, quickEditEventId: id, quickEditDate: date, quickEditTime: time || '00:00', quickEditTimeOnly: timeOnly, pickerMinDate: minDate, pickerMaxDate: maxDate });
   },
 
   onQuickEditDateChange(e) { this.setData({ quickEditDate: e.detail.value }); },
@@ -634,7 +636,21 @@ Page({
   onCancelQuickEdit() { this.setData({ showQuickEdit: false }); },
 
   onConfirmQuickEdit() {
-    const { quickEditEventId, quickEditDate, quickEditTime, currentTabEvents } = this.data;
+    const { quickEditEventId, quickEditDate, quickEditTime, quickEditTimeOnly, currentTabEvents } = this.data;
+    // 时分-only 系统事件（下班/周末）：更新 settings
+    if (quickEditTimeOnly) {
+      const settingKey = quickEditEventId === 'sys_offwork' ? 'offWorkTime' : 'weekendTime';
+      app.globalData.settings[settingKey] = quickEditTime;
+      if (app.globalData.openid) {
+        wx.cloud.database().collection('users').where({ _openid: app.globalData.openid })
+          .update({ data: { [`settings.${settingKey}`]: quickEditTime, updatedAt: wx.cloud.database().serverDate() } })
+          .catch(() => {});
+      }
+      this.setData({ showQuickEdit: false });
+      this._loadEvents();
+      wx.showToast({ title: '已更新', icon: 'success' });
+      return;
+    }
     if (!quickEditDate) { wx.showToast({ title: '请选择日期', icon: 'none' }); return; }
     wx.showLoading({ title: '保存中…', mask: true });
     if (quickEditEventId && String(quickEditEventId).startsWith('sys_')) {

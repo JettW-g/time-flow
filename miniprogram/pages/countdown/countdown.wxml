@@ -322,7 +322,7 @@
       <view class="sheet-close" bindtap="onCancelQuickEdit"><text class="close-icon">×</text></view>
     </view>
     <view class="bottom-sheet-body">
-      <view class="bs-row">
+      <view class="bs-row" wx:if="{{!quickEditTimeOnly}}">
         <text class="bs-label">日期</text>
         <picker mode="date" value="{{quickEditDate}}" start="{{pickerMinDate}}" end="{{pickerMaxDate}}" bindchange="onQuickEditDateChange">
           <view class="bs-picker-display">
