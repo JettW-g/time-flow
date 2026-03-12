@@ -64,23 +64,20 @@ function padZero(n) {
  */
 function getNextWeekendTarget() {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun,1=Mon,...,5=Fri,6=Sat
-
-  let friday = new Date(now);
-  if (day === 6) {
-    friday.setDate(now.getDate() - 1);      // 周六 → 昨天（周五）
-  } else if (day === 0) {
-    friday.setDate(now.getDate() - 2);      // 周日 → 前天（周五）
+  const day = now.getDay();
+  let daysUntilFri;
+  if (day < 5) {
+    daysUntilFri = 5 - day;
+  } else if (day === 5) {
+    const fri18 = new Date(now); fri18.setHours(18,0,0,0);
+    daysUntilFri = now >= fri18 ? 7 : 0;
   } else {
-    friday.setDate(now.getDate() + (5 - day)); // 周一~周五 → 本周五
+    daysUntilFri = 5 + 7 - day;
   }
+  const friday = new Date(now);
+  friday.setDate(now.getDate() + daysUntilFri);
   friday.setHours(18, 0, 0, 0);
-
-  return {
-    date: formatDate(friday),
-    time: '18:00',
-    label: '本周末'
-  };
+  return { date: formatDate(friday), time: '18:00' };
 }
 
 /**
@@ -184,6 +181,43 @@ function getNextWeeklyDate(targetDate) {
 }
 
 /**
+ * 获取下一个高考日期（6月7日）
+ */
+function getNextGaokaoTarget() {
+  const now = new Date();
+  let target = new Date(now.getFullYear(), 5, 7); // June 7
+  if (target <= now) target = new Date(now.getFullYear() + 1, 5, 7);
+  return { date: formatDate(target), time: '00:00' };
+}
+
+/**
+ * 获取下一个元旦日期（1月1日）
+ */
+function getNextNewYearTarget() {
+  const now = new Date();
+  let target = new Date(now.getFullYear(), 0, 1); // Jan 1
+  if (target <= now) target = new Date(now.getFullYear() + 1, 0, 1);
+  return { date: formatDate(target), time: '00:00' };
+}
+
+/**
+ * 计算总天数对应的年月日分解
+ * @param {number} totalDays
+ * @returns {{ years, months, days }}
+ */
+function calcYearsMonthsDays(totalDays) {
+  if (totalDays <= 0) return { years: 0, months: 0, days: 0 };
+  const now = new Date();
+  const future = new Date(now.getFullYear(), now.getMonth(), now.getDate() + totalDays);
+  let years = future.getFullYear() - now.getFullYear();
+  let months = future.getMonth() - now.getMonth();
+  let days = future.getDate() - now.getDate();
+  if (days < 0) { months--; const lm = new Date(future.getFullYear(), future.getMonth(), 0); days += lm.getDate(); }
+  if (months < 0) { years--; months += 12; }
+  return { years, months, days };
+}
+
+/**
  * 根据事件类型获取预置系统事件列表
  * @param {string} offWorkTime
  * @param {Object} holidayMap
@@ -193,43 +227,27 @@ function getSystemEvents(offWorkTime = '18:00', holidayMap = {}) {
   const events = [];
   const now = new Date();
 
+  // 下班
   const offWork = getOffWorkTarget(offWorkTime, holidayMap);
   if (offWork) {
-    // 进度起点：当天 00:00
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
-    events.push({
-      id: 'sys_offwork',
-      name: '今天下班',
-      label: offWork.label,
-      targetDate: offWork.date,
-      targetTime: offWork.time,
-      type: 'system',
-      isSystem: true,
-      isRecurring: false,
-      progressStart: formatDate(todayStart) + 'T00:00:00'
-    });
+    const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+    events.push({ id: 'sys_offwork', name: '下班', targetDate: offWork.date, targetTime: offWork.time, type: 'system', isSystem: true, isRecurring: false, progressStart: formatDate(todayStart) + 'T00:00:00' });
   }
 
-  // 进度起点：最近一个周一 00:00
-  const day = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
-  const daysFromMonday = day === 0 ? 6 : day - 1;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - daysFromMonday);
-  monday.setHours(0, 0, 0, 0);
-
+  // 周末
   const weekend = getNextWeekendTarget();
-  events.push({
-    id: 'sys_weekend',
-    name: '本周末',
-    label: weekend.label,
-    targetDate: weekend.date,
-    targetTime: weekend.time,
-    type: 'system',
-    isSystem: true,
-    isRecurring: false,
-    progressStart: formatDate(monday) + 'T00:00:00'
-  });
+  const day = now.getDay();
+  const daysFromMonday = day === 0 ? 6 : day - 1;
+  const monday = new Date(now); monday.setDate(now.getDate() - daysFromMonday); monday.setHours(0,0,0,0);
+  events.push({ id: 'sys_weekend', name: '周末', targetDate: weekend.date, targetTime: weekend.time, type: 'system', isSystem: true, isRecurring: false, progressStart: formatDate(monday) + 'T00:00:00' });
+
+  // 高考
+  const gaokao = getNextGaokaoTarget();
+  events.push({ id: 'sys_gaokao', name: '高考', targetDate: gaokao.date, targetTime: gaokao.time, type: 'system', isSystem: true, isRecurring: false });
+
+  // 过年
+  const newYear = getNextNewYearTarget();
+  events.push({ id: 'sys_newyear', name: '过年', targetDate: newYear.date, targetTime: newYear.time, type: 'system', isSystem: true, isRecurring: false });
 
   return events;
 }
@@ -304,5 +322,8 @@ module.exports = {
   getSystemEvents,
   selectNearestEvent,
   selectMostRecentPastEvent,
-  daysUntil
+  daysUntil,
+  calcYearsMonthsDays,
+  getNextGaokaoTarget,
+  getNextNewYearTarget
 };

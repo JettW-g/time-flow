@@ -30,87 +30,29 @@ Page({
     ],
     isPastDate: false,
     isSubmitting: false,
-    // Date picker arrays
-    years: [],
-    months: ['01','02','03','04','05','06','07','08','09','10','11','12'],
-    days: [],
-    selectedYearIndex: 0,
-    selectedMonthIndex: 0,
-    selectedDayIndex: 0,
-    // Time picker
-    hours: [],
-    minutes: [],
-    selectedHourIndex: 0,
-    selectedMinuteIndex: 0
+    minDate: '',
+    maxDate: ''
   },
 
   onLoad(options) {
     const { id, date, name } = options;
-    this._initPickerData();
+    const now = new Date();
+    const minDate = this._formatDate(new Date(now.getFullYear() - 100, now.getMonth(), now.getDate()));
+    const maxDate = this._formatDate(new Date(now.getFullYear() + 20, now.getMonth(), now.getDate()));
+    this.setData({ minDate, maxDate });
 
     if (id) {
       this.setData({ mode: 'edit', eventId: id });
       this._loadEvent(id);
     } else {
-      // Pre-fill date if provided (from calendar page)
-      if (date) {
-        this.setData({ 'form.date': date });
-        this._syncPickerFromDate(date);
-        this._updateIsPastDate(date);
-      } else {
-        const today = new Date();
-        const dateStr = this._formatDate(today);
-        this.setData({ 'form.date': dateStr });
-        this._syncPickerFromDate(dateStr);
-        this._updateIsPastDate(dateStr);
-      }
+      const dateStr = date || this._formatDate(now);
+      this.setData({ 'form.date': dateStr });
+      this._updateIsPastDate(dateStr);
       this._updateRecurringDefaults('custom_once');
-      // Pre-fill name if provided (from calendar holiday quick-add)
       if (name) {
         this.setData({ 'form.name': decodeURIComponent(name) });
       }
     }
-  },
-
-  _initPickerData() {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let y = currentYear - 100; y <= currentYear + 20; y++) {
-      years.push(String(y));
-    }
-    const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-    const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-
-    const days = this._getDaysInMonth(currentYear, 1);
-
-    this.setData({
-      years,
-      days,
-      hours,
-      minutes,
-      selectedYearIndex: years.indexOf(String(currentYear)),
-      selectedMonthIndex: new Date().getMonth(),
-      selectedDayIndex: new Date().getDate() - 1,
-      selectedHourIndex: 0,
-      selectedMinuteIndex: 0
-    });
-  },
-
-  _getDaysInMonth(year, month) {
-    const count = new Date(year, month, 0).getDate();
-    return Array.from({ length: count }, (_, i) => String(i + 1).padStart(2, '0'));
-  },
-
-  _syncPickerFromDate(dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const years = this.data.years;
-    const days = this._getDaysInMonth(y, m);
-    this.setData({
-      days,
-      selectedYearIndex: years.indexOf(String(y)),
-      selectedMonthIndex: m - 1,
-      selectedDayIndex: Math.min(d - 1, days.length - 1)
-    });
   },
 
   _loadEvent(id) {
@@ -132,12 +74,7 @@ Page({
             icon: ev.icon || ''
           }
         });
-        this._syncPickerFromDate(ev.targetDate || '');
-        const [h, m] = (ev.targetTime || '00:00').split(':').map(Number);
-        this.setData({
-          selectedHourIndex: h,
-          selectedMinuteIndex: m
-        });
+        this._updateIsPastDate(ev.targetDate || '');
       })
       .catch(() => {
         wx.hideLoading();
@@ -201,36 +138,14 @@ Page({
     this.setData({ 'form.recurringRule': rules[e.detail.value] });
   },
 
-  // Date picker (multi-column)
   onDateChange(e) {
-    const [yIdx, mIdx, dIdx] = e.detail.value;
-    const year = parseInt(this.data.years[yIdx]);
-    const month = parseInt(this.data.months[mIdx]);
-    const days = this._getDaysInMonth(year, month);
-    const dayIdx = Math.min(dIdx, days.length - 1);
-    const day = parseInt(days[dayIdx]);
-
-    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    this.setData({
-      days,
-      selectedYearIndex: yIdx,
-      selectedMonthIndex: mIdx,
-      selectedDayIndex: dayIdx,
-      'form.date': dateStr
-    });
+    const dateStr = e.detail.value;
+    this.setData({ 'form.date': dateStr });
     this._updateIsPastDate(dateStr);
   },
 
-  // Time picker
   onTimeChange(e) {
-    const [hIdx, mIdx] = e.detail.value;
-    const h = String(hIdx).padStart(2, '0');
-    const m = String(mIdx).padStart(2, '0');
-    this.setData({
-      selectedHourIndex: hIdx,
-      selectedMinuteIndex: mIdx,
-      'form.time': `${h}:${m}`
-    });
+    this.setData({ 'form.time': e.detail.value });
   },
 
   // ========================
@@ -310,35 +225,10 @@ Page({
       return;
     }
 
-    // Check 1-year boundary rules
+    // Check event count limits before creating
     const now = new Date();
     const eventDateTime = new Date(`${targetDate}T${form.time || '00:00'}:00`);
     const isPast = eventDateTime < now;
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
-
-    if (isPast && (now - eventDateTime) > oneYearMs) {
-      this.setData({ isSubmitting: false });
-      wx.showModal({
-        title: '不能创建',
-        content: '事情过去这么久了，该放下就要放下，向前看',
-        showCancel: false,
-        confirmText: '知道了'
-      });
-      return;
-    }
-
-    if (!isPast && (eventDateTime - now) > oneYearMs) {
-      this.setData({ isSubmitting: false });
-      wx.showModal({
-        title: '不能创建超过一年的事件',
-        content: '还早着呢，别着急，慢慢来',
-        showCancel: false,
-        confirmText: '知道了'
-      });
-      return;
-    }
-
-    // Check event count limits before creating
     const limit = isPast ? 10 : 20;
     const limitMsg = isPast
       ? '有些事情，该放下就要放下，向前看'

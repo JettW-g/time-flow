@@ -87,11 +87,8 @@
 
     <block wx:if="{{currentEvent}}">
 
-      <!-- 事件标题：倒计时结束后显示特殊短语 -->
-      <view wx:if="{{showEndedPhrase}}" class="ended-phrase-wrap">
-        <text class="ended-phrase-text">是终点，也是起点。</text>
-      </view>
-      <view wx:else class="event-header" bindtap="onTapEventName">
+      <!-- 事件标题 -->
+      <view class="event-header" bindtap="onTapEventName">
         <text class="event-icon" wx:if="{{currentEvent.icon}}">{{currentEvent.icon}}</text>
         <text class="event-name">{{currentEvent.name}}</text>
         <view class="pin-badge" wx:if="{{pinnedEventId && (currentEvent._id === pinnedEventId || currentEvent.id === pinnedEventId)}}">
@@ -117,9 +114,9 @@
       <!-- ===== 滑动数字时钟 ===== -->
       <view class="flip-clock-device">
 
-        <!-- 未来已来 覆盖层 -->
+        <!-- 倒计时结束覆盖层 -->
         <view wx:if="{{showArrivedOverlay}}" class="arrived-overlay">
-          <text class="arrived-text">未来已来</text>
+          <text class="arrived-text">是终点，也是起点。</text>
         </view>
 
         <!-- 天 行 -->
@@ -129,7 +126,7 @@
               <template is="{{activeTab === 'past' ? 'slideCardUp' : 'slideCardDown'}}" data="{{...item}}" />
             </view>
           </view>
-          <text class="unit-label">天</text>
+          <view class="unit-label-wrap"><text class="unit-label">天</text><text wx:if="{{dayYMD}}" class="ymd-label"> — 还有{{dayYMD}}</text></view>
         </view>
 
         <!-- 分割线 -->
@@ -193,38 +190,225 @@
   <view class="overlay" wx:if="{{showEventList}}" bindtap="onCloseEventList"></view>
   <view class="event-list-sheet {{showEventList ? 'show' : ''}}">
     <view class="sheet-header">
-      <text class="sheet-title">{{activeTab === 'past' ? '历史关注事件' : '未来事件'}}</text>
+      <text class="sheet-title">事件列表</text>
       <view class="sheet-close" bindtap="onCloseEventList">
         <text class="close-icon">×</text>
       </view>
     </view>
+    <!-- Sheet tab bar -->
+    <view class="sheet-tab-bar">
+      <view class="sheet-tab-item {{sheetTab === 'active' ? 'sheet-tab-active' : ''}}" bindtap="onSwitchSheetTab" data-tab="active">
+        <text class="sheet-tab-text">进行中事件</text>
+      </view>
+      <view class="sheet-tab-item {{sheetTab === 'special' ? 'sheet-tab-active' : ''}}" bindtap="onSwitchSheetTab" data-tab="special">
+        <text class="sheet-tab-text">有点特别鸭</text>
+      </view>
+    </view>
     <scroll-view class="sheet-scroll" scroll-y>
-      <view
-        wx:for="{{currentTabEvents}}"
-        wx:key="_key"
-        class="event-list-item {{(item._id === pinnedEventId || item.id === pinnedEventId) ? 'pinned' : ''}}"
-      >
-        <view class="event-item-main" bindtap="onSelectEvent" data-id="{{item._id || item.id}}">
-          <view class="event-type-dot type-{{item.type}}"></view>
-          <view class="event-item-info">
-            <text class="event-item-name"><text wx:if="{{item.icon}}">{{item.icon}} </text>{{item.name}}</text>
-            <text class="event-item-date">{{item.targetDate}} {{item.targetTime || '00:00'}}</text>
-          </view>
-          <view
-            class="pin-btn {{(item._id === pinnedEventId || item.id === pinnedEventId) ? 'pinned' : ''}}"
-            catchtap="onPinEvent"
-            data-id="{{item._id || item.id}}"
-          >
-            <text class="pin-btn-text">{{(item._id === pinnedEventId || item.id === pinnedEventId) ? '已置顶' : '置顶'}}</text>
+      <!-- 进行中事件 -->
+      <block wx:if="{{sheetTab === 'active'}}">
+        <view
+          wx:for="{{currentTabEvents}}"
+          wx:key="_key"
+          class="event-list-item {{(item._id === pinnedEventId || item.id === pinnedEventId) ? 'pinned' : ''}}"
+        >
+          <view class="event-item-main" bindtap="onSelectEvent" data-id="{{item._id || item.id}}">
+            <view class="event-type-dot type-{{item.type}}"></view>
+            <view class="event-item-info">
+              <text class="event-item-name"><text wx:if="{{item.icon}}">{{item.icon}} </text>{{item.name}}</text>
+              <text class="event-item-date">{{item.targetDate}} {{item.targetTime || '00:00'}}</text>
+            </view>
+            <view class="event-item-actions">
+              <view wx:if="{{!item.isSystem}}" class="quick-edit-btn" catchtap="onQuickEditTime" data-id="{{item._id || item.id}}" data-date="{{item.targetDate}}" data-time="{{item.targetTime || '00:00'}}">
+                <text class="quick-edit-text">调整时间</text>
+              </view>
+              <view
+                class="pin-btn {{(item._id === pinnedEventId || item.id === pinnedEventId) ? 'pinned' : ''}}"
+                catchtap="onPinEvent"
+                data-id="{{item._id || item.id}}"
+              >
+                <text class="pin-btn-text">{{(item._id === pinnedEventId || item.id === pinnedEventId) ? '已置顶' : '置顶'}}</text>
+              </view>
+            </view>
           </view>
         </view>
-      </view>
-      <view wx:if="{{currentTabEvents.length === 0}}" class="empty-state">
-        <text class="empty-text">
-          {{activeTab === 'past' ? '暂无历史关注事件，去"我的"添加历史时间点' : '暂无未来事件，去"我的"添加吧'}}
-        </text>
-      </view>
+        <view wx:if="{{currentTabEvents.length === 0}}" class="empty-state">
+          <text class="empty-text">{{activeTab === 'past' ? '暂无历史关注事件' : '暂无未来事件'}}</text>
+        </view>
+      </block>
+      <!-- 有点特别鸭 -->
+      <block wx:if="{{sheetTab === 'special'}}">
+        <view class="special-event-item">
+          <view class="special-event-info">
+            <text class="special-event-icon">🏖️</text>
+            <view class="special-event-text">
+              <text class="special-event-name">退休</text>
+              <text class="special-event-desc">根据出生年月和性别计算</text>
+            </view>
+          </view>
+          <view class="special-add-btn" bindtap="onAddSpecialEvent" data-type="retire">
+            <text class="special-add-text">添加关注</text>
+          </view>
+        </view>
+        <view class="special-event-item">
+          <view class="special-event-info">
+            <text class="special-event-icon">📚</text>
+            <view class="special-event-text">
+              <text class="special-event-name">高考</text>
+              <text class="special-event-desc">最近一个6月7号</text>
+            </view>
+          </view>
+          <view class="special-add-btn" bindtap="onAddSpecialEvent" data-type="gaokao">
+            <text class="special-add-text">添加关注</text>
+          </view>
+        </view>
+        <view class="special-event-item">
+          <view class="special-event-info">
+            <text class="special-event-icon">☀️</text>
+            <view class="special-event-text">
+              <text class="special-event-name">暑假</text>
+              <text class="special-event-desc">选择你的暑假开始时间</text>
+            </view>
+          </view>
+          <view class="special-add-btn" bindtap="onAddSpecialEvent" data-type="summer">
+            <text class="special-add-text">添加关注</text>
+          </view>
+        </view>
+        <view class="special-event-item">
+          <view class="special-event-info">
+            <text class="special-event-icon">❄️</text>
+            <view class="special-event-text">
+              <text class="special-event-name">寒假</text>
+              <text class="special-event-desc">选择你的寒假开始时间</text>
+            </view>
+          </view>
+          <view class="special-add-btn" bindtap="onAddSpecialEvent" data-type="winter">
+            <text class="special-add-text">添加关注</text>
+          </view>
+        </view>
+        <view class="special-event-item">
+          <view class="special-event-info">
+            <text class="special-event-icon">💍</text>
+            <view class="special-event-text">
+              <text class="special-event-name">结婚</text>
+              <text class="special-event-desc">选择你的婚礼日期</text>
+            </view>
+          </view>
+          <view class="special-add-btn" bindtap="onAddSpecialEvent" data-type="wedding">
+            <text class="special-add-text">添加关注</text>
+          </view>
+        </view>
+        <view class="special-event-item">
+          <view class="special-event-info">
+            <text class="special-event-icon">👶</text>
+            <view class="special-event-text">
+              <text class="special-event-name">宝宝出生</text>
+              <text class="special-event-desc">选择预产期</text>
+            </view>
+          </view>
+          <view class="special-add-btn" bindtap="onAddSpecialEvent" data-type="baby">
+            <text class="special-add-text">添加关注</text>
+          </view>
+        </view>
+      </block>
     </scroll-view>
+  </view>
+
+  <!-- 快速调整时间弹层 -->
+  <view class="overlay" style="z-index: 250;" wx:if="{{showQuickEdit}}" bindtap="onCancelQuickEdit"></view>
+  <view class="bottom-sheet {{showQuickEdit ? 'show' : ''}}">
+    <view class="sheet-header">
+      <text class="sheet-title">调整时间</text>
+      <view class="sheet-close" bindtap="onCancelQuickEdit"><text class="close-icon">×</text></view>
+    </view>
+    <view class="bottom-sheet-body">
+      <view class="bs-row">
+        <text class="bs-label">日期</text>
+        <picker mode="date" value="{{quickEditDate}}" start="{{pickerMinDate}}" end="{{pickerMaxDate}}" bindchange="onQuickEditDateChange">
+          <view class="bs-picker-display">
+            <text class="bs-picker-value">{{quickEditDate || '请选择日期'}}</text>
+            <text class="bs-picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+      <view class="bs-row">
+        <text class="bs-label">时间</text>
+        <picker mode="time" value="{{quickEditTime}}" bindchange="onQuickEditTimeChange">
+          <view class="bs-picker-display">
+            <text class="bs-picker-value">{{quickEditTime}}</text>
+            <text class="bs-picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+    <view class="bs-actions">
+      <view class="bs-btn-cancel" bindtap="onCancelQuickEdit"><text>取消</text></view>
+      <view class="bs-btn-confirm" bindtap="onConfirmQuickEdit"><text>确认</text></view>
+    </view>
+  </view>
+
+  <!-- 特别事件时间输入弹层 -->
+  <view class="overlay" style="z-index: 250;" wx:if="{{showSpecialTimeSheet}}" bindtap="onCancelSpecialTime"></view>
+  <view class="bottom-sheet {{showSpecialTimeSheet ? 'show' : ''}}">
+    <view class="sheet-header">
+      <text class="sheet-title">添加{{specialEventName}}</text>
+      <view class="sheet-close" bindtap="onCancelSpecialTime"><text class="close-icon">×</text></view>
+    </view>
+    <view class="bottom-sheet-body">
+      <view class="bs-row">
+        <text class="bs-label">日期</text>
+        <picker mode="date" value="{{specialDate}}" start="{{pickerMinDate}}" end="{{pickerMaxDate}}" bindchange="onSpecialDateChange">
+          <view class="bs-picker-display">
+            <text class="bs-picker-value">{{specialDate || '请选择日期'}}</text>
+            <text class="bs-picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+      <view class="bs-row">
+        <text class="bs-label">时间</text>
+        <picker mode="time" value="{{specialTime}}" bindchange="onSpecialTimeChange">
+          <view class="bs-picker-display">
+            <text class="bs-picker-value">{{specialTime}}</text>
+            <text class="bs-picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+    <view class="bs-actions">
+      <view class="bs-btn-cancel" bindtap="onCancelSpecialTime"><text>取消</text></view>
+      <view class="bs-btn-confirm" bindtap="onConfirmSpecialTime"><text>确认添加</text></view>
+    </view>
+  </view>
+
+  <!-- 退休信息录入弹层 -->
+  <view class="overlay" style="z-index: 250;" wx:if="{{showRetireSheet}}" bindtap="onCancelRetire"></view>
+  <view class="bottom-sheet {{showRetireSheet ? 'show' : ''}}">
+    <view class="sheet-header">
+      <text class="sheet-title">计算退休时间</text>
+      <view class="sheet-close" bindtap="onCancelRetire"><text class="close-icon">×</text></view>
+    </view>
+    <view class="bottom-sheet-body">
+      <text class="bs-tip">填写出生年月和性别，计算退休倒计时（男65岁，女60岁）</text>
+      <view class="bs-row">
+        <text class="bs-label">性别</text>
+        <view class="bs-gender-row">
+          <view class="bs-gender-btn {{retireGender === 'male' ? 'active' : ''}}" bindtap="onRetireGenderChange" data-gender="male"><text>男</text></view>
+          <view class="bs-gender-btn {{retireGender === 'female' ? 'active' : ''}}" bindtap="onRetireGenderChange" data-gender="female"><text>女</text></view>
+        </view>
+      </view>
+      <view class="bs-row">
+        <text class="bs-label">出生年份</text>
+        <input class="bs-input" type="number" placeholder="如：1990" maxlength="4" value="{{retireBirthYear}}" bindinput="onRetireBirthYearInput" />
+      </view>
+      <view class="bs-row">
+        <text class="bs-label">出生月份</text>
+        <input class="bs-input" type="number" placeholder="1-12" maxlength="2" value="{{retireBirthMonth}}" bindinput="onRetireBirthMonthInput" />
+      </view>
+    </view>
+    <view class="bs-actions">
+      <view class="bs-btn-cancel" bindtap="onCancelRetire"><text>取消</text></view>
+      <view class="bs-btn-confirm" bindtap="onConfirmRetire"><text>计算并添加</text></view>
+    </view>
   </view>
 
 </view>

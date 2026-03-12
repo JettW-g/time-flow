@@ -30,7 +30,8 @@ const {
   padZero,
   getSystemEvents,
   selectNearestEvent,
-  selectMostRecentPastEvent
+  selectMostRecentPastEvent,
+  calcYearsMonthsDays
 } = require('../../utils/countdown');
 const { buildHolidayMap, getBuiltinLegalHolidays } = require('../../utils/holidays');
 
@@ -62,13 +63,33 @@ Page({
     progressPercent: 0,
     mottoText: '',
     mottoVisible: false,
-    showEndedPhrase: false,
-
     // ── Digit flip cards ───────────────────────────────
-    dayDigits: [emptyDigit(), emptyDigit(), emptyDigit()],
+    dayDigits: [emptyDigit(), emptyDigit(), emptyDigit(), emptyDigit()],
     hDigits:   [emptyDigit(), emptyDigit()],
     mDigits:   [emptyDigit(), emptyDigit()],
     sDigits:   [emptyDigit(), emptyDigit()],
+    dayYMD: '',
+    // ── Sheet tabs & quick edit ─────────────────────────
+    sheetTab: 'active',
+    showQuickEdit: false,
+    quickEditEventId: null,
+    quickEditDate: '',
+    quickEditTime: '00:00',
+    // Retirement sheet
+    showRetireSheet: false,
+    retireBirthYear: '',
+    retireBirthMonth: '',
+    retireGender: 'male',
+    // Special event time sheet
+    showSpecialTimeSheet: false,
+    specialEventType: '',
+    specialEventName: '',
+    specialEventIcon: '',
+    specialDate: '',
+    specialTime: '00:00',
+    // Min/max dates for pickers
+    pickerMinDate: '',
+    pickerMaxDate: '',
   },
 
   _timer: null,
@@ -93,7 +114,8 @@ Page({
     this._loadEvents();
     this._startTimer();
     this._startMotto();
-    this._pickAndPlayLottie();
+    // 延迟确保页面节点渲染完成后再初始化 canvas
+    setTimeout(() => { this._pickAndPlayLottie(); }, 300);
   },
 
   onHide() {
@@ -247,7 +269,6 @@ Page({
         return wasOriginallyFuture && (now - t) < oneDayMs;
       });
 
-      const oneYearMs = 365 * 24 * 60 * 60 * 1000;
       const pastEvents = allEvents.filter(e => {
         if (e.isSystem) return false;
         const t = new Date(`${e.targetDate}T${e.targetTime || '00:00'}:00`);
@@ -255,31 +276,8 @@ Page({
         // 未来事件到期后直接归档，不分流到"过去" tab
         const createdAt = e.createdAt ? new Date(e.createdAt) : now;
         if (t >= createdAt) return false;
-        // 过去事件：超过1年的已归档，不在主界面显示
-        return (now - t) < oneYearMs;
+        return true;
       });
-
-      // Auto-archive past events older than 1 year
-      const overdueEvents = pastEvents.filter(e => {
-        const t = new Date(`${e.targetDate}T${e.targetTime || '00:00'}:00`);
-        return (now - t) > oneYearMs;
-      });
-      if (overdueEvents.length > 0) {
-        const db = wx.cloud.database();
-        const ids = overdueEvents.map(e => e._id).filter(Boolean);
-        Promise.all(ids.map(id => db.collection('events').doc(id).remove()))
-          .catch(() => {});
-        pastEvents = pastEvents.filter(e => !ids.includes(e._id));
-        if (!self._overdueNotified) {
-          self._overdueNotified = true;
-          wx.showModal({
-            title: '已超过一年，自动归档',
-            content: '往事不可追',
-            showCancel: false,
-            confirmText: '知道了'
-          });
-        }
-      }
 
       self.setData({ futureEvents, pastEvents, pinnedEventId, isLoading: false });
       self._selectForActiveTab();
@@ -380,14 +378,13 @@ Page({
     const zero = () => emptyDigit();
     this._arrivedShown = false;
     this.setData({
-      dayDigits: [zero(), zero(), zero()],
+      dayDigits: [zero(), zero(), zero(), zero()],
       hDigits:   [zero(), zero()],
       mDigits:   [zero(), zero()],
       sDigits:   [zero(), zero()],
       showArrivedOverlay: false,
       showProgressBar: false,
       progressPercent: 0,
-      showEndedPhrase: false,
     });
   },
 
@@ -432,7 +429,7 @@ Page({
             countdown: result,
             targetTimeStr: `${currentEvent.targetDate} ${t0.length === 5 ? t0 + ':00' : t0}`
           });
-          '000'.split('').forEach((v, i) => {
+          '0000'.split('').forEach((v, i) => {
             if (v !== this.data.dayDigits[i].curr) this._triggerFlip('dayDigits', i, v);
           });
           '00'.split('').forEach((v, i) => {
@@ -449,7 +446,7 @@ Page({
           if (!this._arrivedShown) {
             this._arrivedShown = true;
             // 先把数字归零
-            '000'.split('').forEach((v, i) => {
+            '0000'.split('').forEach((v, i) => {
               if (v !== this.data.dayDigits[i].curr) this._triggerFlip('dayDigits', i, v);
             });
             '00'.split('').forEach((v, i) => {
@@ -461,7 +458,7 @@ Page({
             const expiredAgoMs = Date.now() - eventDateTime.getTime();
             if (expiredAgoMs < 10000) {
               // 刚刚到期（10秒内）：播放"未来已来"动画，2.5s 后重新加载
-              this.setData({ showArrivedOverlay: true, showEndedPhrase: true, mottoText: '时间已经到啦！', mottoVisible: true });
+              this.setData({ showArrivedOverlay: true, mottoText: '时间已经到啦！', mottoVisible: true });
               const t = setTimeout(() => {
                 this.setData({ showArrivedOverlay: false });
                 this._arrivedShown = false;
@@ -470,7 +467,7 @@ Page({
               this._flipTimers.push(t);
             } else {
               // 宽限期内（已过期但不超过1天）：直接展示已到达状态，不重播动画
-              this.setData({ showProgressBar: true, progressPercent: 100, showEndedPhrase: true, mottoText: '时间已经到啦！', mottoVisible: true });
+              this.setData({ showProgressBar: true, progressPercent: 100, mottoText: '时间已经到啦！', mottoVisible: true });
             }
           }
         }
@@ -483,10 +480,17 @@ Page({
     const targetTimeStr = `${currentEvent.targetDate} ${t.length === 5 ? t + ':00' : t}`;
     this.setData({ countdown: result, targetTimeStr });
 
-    const d = String(result.days).padStart(3, '0');
+    const d = String(result.days).padStart(4, '0');
     const h = padZero(result.hours);
     const m = padZero(result.minutes);
     const s = padZero(result.seconds);
+
+    const ymd = calcYearsMonthsDays(result.days);
+    const ymdParts = [];
+    if (ymd.years > 0) ymdParts.push(ymd.years + '年');
+    if (ymd.months > 0) ymdParts.push(ymd.months + '月');
+    ymdParts.push(ymd.days + '天');
+    this.setData({ dayYMD: ymdParts.join('') });
 
     d.split('').forEach((v, i) => {
       if (v !== this.data.dayDigits[i].curr) this._triggerFlip('dayDigits', i, v);
@@ -579,7 +583,7 @@ Page({
   // Interactions
   // ========================
 
-  onTapEventName() { this.setData({ showEventList: true }); },
+  onTapEventName() { this.setData({ showEventList: true, sheetTab: 'active' }); },
   onCloseEventList() {
     if (this._lottieAnim) { this._lottieAnim.destroy(); this._lottieAnim = null; }
     this.setData({ showEventList: false }, () => { this._pickAndPlayLottie(); });
@@ -606,6 +610,106 @@ Page({
     this.setData({ pinnedEventId: newPinned });
     app.setPinnedEvent(newPinned);
     wx.showToast({ title: newPinned ? '已置顶' : '已取消置顶', icon: 'success', duration: 1500 });
+  },
+
+  onSwitchSheetTab(e) {
+    this.setData({ sheetTab: e.currentTarget.dataset.tab });
+  },
+
+  // Quick time edit
+  onQuickEditTime(e) {
+    const { id, date, time } = e.currentTarget.dataset;
+    const now = new Date();
+    const minDate = `${now.getFullYear() - 100}-01-01`;
+    const maxDate = `${now.getFullYear() + 20}-12-31`;
+    this.setData({ showQuickEdit: true, quickEditEventId: id, quickEditDate: date, quickEditTime: time || '00:00', pickerMinDate: minDate, pickerMaxDate: maxDate });
+  },
+
+  onQuickEditDateChange(e) { this.setData({ quickEditDate: e.detail.value }); },
+  onQuickEditTimeChange(e) { this.setData({ quickEditTime: e.detail.value }); },
+
+  onCancelQuickEdit() { this.setData({ showQuickEdit: false }); },
+
+  onConfirmQuickEdit() {
+    const { quickEditEventId, quickEditDate, quickEditTime } = this.data;
+    if (!quickEditDate) { wx.showToast({ title: '请选择日期', icon: 'none' }); return; }
+    wx.showLoading({ title: '保存中…', mask: true });
+    wx.cloud.database().collection('events').doc(quickEditEventId).update({
+      data: { targetDate: quickEditDate, targetTime: quickEditTime, updatedAt: wx.cloud.database().serverDate() }
+    }).then(() => {
+      wx.hideLoading();
+      wx.showToast({ title: '已更新', icon: 'success' });
+      this.setData({ showQuickEdit: false });
+      this._loadEvents();
+    }).catch(() => {
+      wx.hideLoading();
+      wx.showToast({ title: '更新失败', icon: 'error' });
+    });
+  },
+
+  // Special events
+  onAddSpecialEvent(e) {
+    const { type } = e.currentTarget.dataset;
+    if (type === 'retire') {
+      this.setData({ showRetireSheet: true, retireBirthYear: '', retireBirthMonth: '', retireGender: 'male' });
+    } else if (type === 'gaokao') {
+      // Auto-add next June 7
+      const now = new Date();
+      let target = new Date(now.getFullYear(), 5, 7);
+      if (target <= now) target = new Date(now.getFullYear() + 1, 5, 7);
+      const dateStr = target.getFullYear() + '-06-07';
+      this._saveSpecialEvent('高考', '📚', dateStr, '00:00');
+    } else {
+      const names = { summer: '暑假', winter: '寒假', wedding: '结婚', baby: '宝宝出生' };
+      const icons = { summer: '☀️', winter: '❄️', wedding: '💍', baby: '👶' };
+      const now = new Date();
+      const minDate = `${now.getFullYear()}-01-01`;
+      const maxDate = `${now.getFullYear() + 20}-12-31`;
+      this.setData({ showSpecialTimeSheet: true, specialEventType: type, specialEventName: names[type], specialDate: '', specialTime: '00:00', pickerMinDate: minDate, pickerMaxDate: maxDate, specialEventIcon: icons[type] });
+    }
+  },
+
+  onSpecialDateChange(e) { this.setData({ specialDate: e.detail.value }); },
+  onSpecialTimeChange(e) { this.setData({ specialTime: e.detail.value }); },
+  onCancelSpecialTime() { this.setData({ showSpecialTimeSheet: false }); },
+
+  onConfirmSpecialTime() {
+    const { specialEventName, specialEventIcon, specialDate, specialTime } = this.data;
+    if (!specialDate) { wx.showToast({ title: '请选择日期', icon: 'none' }); return; }
+    this._saveSpecialEvent(specialEventName, specialEventIcon, specialDate, specialTime);
+    this.setData({ showSpecialTimeSheet: false });
+  },
+
+  _saveSpecialEvent(name, icon, targetDate, targetTime) {
+    if (!app.globalData.isLoggedIn) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
+    wx.showLoading({ title: '添加中…', mask: true });
+    const db = wx.cloud.database();
+    db.collection('events').add({ data: { name, icon, targetDate, targetTime: targetTime || '00:00', type: 'custom_once', isRecurring: false, note: '', createdAt: db.serverDate() } })
+      .then(() => { wx.hideLoading(); wx.showToast({ title: '已添加', icon: 'success' }); this._loadEvents(); })
+      .catch(() => { wx.hideLoading(); wx.showToast({ title: '添加失败', icon: 'error' }); });
+  },
+
+  onRetireGenderChange(e) { this.setData({ retireGender: e.currentTarget.dataset.gender }); },
+  onRetireBirthYearInput(e) { this.setData({ retireBirthYear: e.detail.value }); },
+  onRetireBirthMonthInput(e) { this.setData({ retireBirthMonth: e.detail.value }); },
+  onCancelRetire() { this.setData({ showRetireSheet: false }); },
+
+  onConfirmRetire() {
+    const { retireBirthYear, retireBirthMonth, retireGender } = this.data;
+    const year = parseInt(retireBirthYear);
+    const month = parseInt(retireBirthMonth);
+    if (!year || year < 1920 || year > 2010) { wx.showToast({ title: '请输入有效出生年份', icon: 'none' }); return; }
+    if (!month || month < 1 || month > 12) { wx.showToast({ title: '请输入有效出生月份(1-12)', icon: 'none' }); return; }
+    const retireAge = retireGender === 'male' ? 65 : 60;
+    const retireYear = year + retireAge;
+    const targetDate = `${retireYear}-${String(month).padStart(2,'0')}-01`;
+    // Save birth info to user profile
+    if (app.globalData.openid) {
+      const db = wx.cloud.database();
+      db.collection('users').where({ _openid: app.globalData.openid }).update({ data: { birthYear: year, birthMonth: month, gender: retireGender, updatedAt: db.serverDate() } }).catch(() => {});
+    }
+    this._saveSpecialEvent('退休', '🏖️', targetDate, '00:00');
+    this.setData({ showRetireSheet: false });
   },
 
   onGoCalendar() { wx.navigateTo({ url: '/pages/calendar/calendar' }); },
