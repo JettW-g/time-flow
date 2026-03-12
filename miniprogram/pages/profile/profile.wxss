@@ -43,10 +43,13 @@
 
 /* 展示模式 */
 .name-display-row {
-  display: flex; align-items: center; gap: 10rpx;
+  display: flex; align-items: flex-start; gap: 10rpx; flex-wrap: wrap;
 }
-.user-name { font-size: 34rpx; font-weight: 700; color: #1A1D2E; }
-.name-edit-icon { font-size: 24rpx; color: #CBD5E1; flex-shrink: 0; }
+.user-name {
+  font-size: 34rpx; font-weight: 700; color: #1A1D2E;
+  word-break: break-all; line-height: 1.35;
+}
+.name-edit-icon { font-size: 24rpx; color: #CBD5E1; flex-shrink: 0; margin-top: 6rpx; }
 
 /* 编辑模式 */
 .name-edit-wrap {
@@ -108,7 +111,7 @@
 /* === Section header === */
 .section-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 28rpx 36rpx 12rpx;
+  padding: 28rpx 36rpx 8rpx;
 }
 .section-header-archived { padding-top: 36rpx; }
 .section-title-wrap { display: flex; align-items: center; gap: 12rpx; }
@@ -116,19 +119,43 @@
 .dot-active   { background: #10B981; box-shadow: 0 0 0 3rpx rgba(16,185,129,0.2); }
 .dot-archived { background: #94A3B8; }
 .section-title { font-size: 24rpx; color: #475569; letter-spacing: 2rpx; font-weight: 700; }
-.section-count { font-size: 21rpx; color: #94A3B8; font-weight: 500; }
+.section-count { font-size: 24rpx; color: #475569; font-weight: 700; }
 .section-hint  { font-size: 21rpx; color: #CBD5E1; }
 
 .section-empty { padding: 32rpx 36rpx; }
 .section-empty-text { font-size: 26rpx; color: #CBD5E1; }
 
-/* Archived sub-headers */
+/* Archived sub-headers (legacy, kept for compatibility) */
 .archived-sub-header {
   padding: 20rpx 36rpx 8rpx;
 }
 .archived-sub-label {
   font-size: 20rpx; color: #CBD5E1; font-weight: 600;
   letter-spacing: 2rpx; text-transform: uppercase;
+}
+
+/* === Sub-tab row === */
+.sub-tab-row {
+  display: flex; flex-direction: row; align-items: center;
+  padding: 8rpx 24rpx 16rpx; gap: 12rpx;
+}
+.sub-tab-item {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 14rpx 6rpx;
+  border-radius: 20rpx;
+  background: transparent;
+  border: 1rpx solid transparent;
+  transition: all 0.2s ease;
+}
+.sub-tab-active {
+  background: rgba(124, 58, 237, 0.07);
+  border-color: rgba(124, 58, 237, 0.18);
+}
+.sub-tab-text {
+  font-size: 22rpx; color: #94A3B8; font-weight: 500; letter-spacing: 1rpx;
+}
+.sub-tab-active .sub-tab-text {
+  color: #7C3AED; font-weight: 700;
 }
 
 /* Loading */

@@ -1,8 +1,28 @@
 const app = getApp();
+const lottie = require('lottie-miniprogram');
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 const MOTTOS_FUTURE = ['再坚持一下就到了！', '时间正在接近！', '期待让等待有了意义。', '好事多磨，值得等待。', '每一天都是倒计时的一格。'];
 const MOTTOS_PAST = ['时光荏苒，一去不返。', '时间在指尖流淌…', '回忆是时间留下的礼物。', '那一刻，已是永恒。', '岁月不居，往事如烟。'];
+
+// Lottie 云端文件 ID
+const CLOUD_PREFIX = 'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/';
+const FUTURE_LOTTIE_POOL = ['walk_cycling_shoes.json', 'car.json'];
+const PAST_LOTTIE_POOL   = ['singing_and_playing.json', 'data_visualization.json'];
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// 微信小程序不支持 eval()，Lottie JSON 中 x 为字符串时是 AE 表达式，递归删除
+function stripLottieExpressions(obj) {
+  if (Array.isArray(obj)) {
+    obj.forEach(stripLottieExpressions);
+  } else if (obj && typeof obj === 'object') {
+    if (typeof obj.x === 'string') delete obj.x;
+    for (const v of Object.values(obj)) {
+      if (v && typeof v === 'object') stripLottieExpressions(v);
+    }
+  }
+}
 
 const {
   calculateCountdown,
@@ -42,8 +62,7 @@ Page({
     progressPercent: 0,
     mottoText: '',
     mottoVisible: false,
-    rushGifUrl: '',
-    tangGifUrl: '',
+    showEndedPhrase: false,
 
     // ── Digit flip cards ───────────────────────────────
     dayDigits: [emptyDigit(), emptyDigit(), emptyDigit()],
@@ -61,41 +80,131 @@ Page({
   _mottoFadeTimer: null,
   _mottoIndexFuture: 0,
   _mottoIndexPast: 0,
+  // Lottie
+  _lottieAnim: null,
 
   onLoad() {
     const { statusBarHeight } = wx.getSystemInfoSync();
     this.setData({ statusBarHeight });
     this._initHolidays();
-    this._loadGifUrls();
-  },
-
-  _loadGifUrls() {
-    wx.cloud.getTempFileURL({
-      fileList: [
-        'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/rush.gif',
-        'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/tang.gif'
-      ],
-      success: res => {
-        const list = res.fileList;
-        const rush = list.find(f => f.fileID.includes('rush.gif'));
-        const tang = list.find(f => f.fileID.includes('tang.gif'));
-        this.setData({
-          rushGifUrl: rush && rush.tempFileURL || '',
-          tangGifUrl: tang && tang.tempFileURL || ''
-        });
-      },
-      fail: err => console.error('getTempFileURL fail:', err)
-    });
   },
 
   onShow() {
     this._loadEvents();
     this._startTimer();
     this._startMotto();
+    this._pickAndPlayLottie();
   },
 
-  onHide()   { this._stopTimer(); this._stopMotto(); },
-  onUnload() { this._stopTimer(); this._stopMotto(); },
+  onHide() {
+    this._stopTimer();
+    this._stopMotto();
+    if (this._lottieAnim) { this._lottieAnim.stop(); }
+  },
+
+  onUnload() {
+    this._stopTimer();
+    this._stopMotto();
+    if (this._lottieAnim) { this._lottieAnim.destroy(); this._lottieAnim = null; }
+  },
+
+  onShareAppMessage() {
+    const event = this.data.currentEvent;
+    const title = event ? `${event.icon || ''}${event.name} 倒计时` : '时光流转，分秒必争';
+    return {
+      title,
+      path: '/pages/countdown/countdown'
+    };
+  },
+
+  onShareTimeline() {
+    const event = this.data.currentEvent;
+    const title = event ? `${event.icon || ''}${event.name} 倒计时` : '时光流转，分秒必争';
+    return { title };
+  },
+
+  // ========================
+  // Lottie
+  // ========================
+
+  _pickAndPlayLottie() {
+    const { activeTab } = this.data;
+    const pool = activeTab === 'future' ? FUTURE_LOTTIE_POOL : PAST_LOTTIE_POOL;
+    const filename = pickRandom(pool);
+    const globalCache = app.globalData.lottieJsonCache;
+
+    // 销毁旧动画
+    if (this._lottieAnim) {
+      this._lottieAnim.destroy();
+      this._lottieAnim = null;
+    }
+
+    if (globalCache[filename]) {
+      // 全局缓存命中：等待 canvas 渲染完成后直接渲染（极短延迟）
+      setTimeout(() => {
+        if (this.data.activeTab === activeTab) {
+          this._renderLottie(globalCache[filename]);
+        }
+      }, 50);
+    } else {
+      // 缓存未命中（一般仅首次冷启动网络极慢时）：fallback 走云端下载
+      setTimeout(() => {
+        this._fetchAndRenderLottie(CLOUD_PREFIX + filename, filename, activeTab);
+      }, 50);
+    }
+  },
+
+  // Fallback：缓存未命中时从云端下载并渲染
+  _fetchAndRenderLottie(cloudFileID, filename, requestedTab) {
+    wx.cloud.getTempFileURL({
+      fileList: [cloudFileID],
+      success: res => {
+        const tempUrl = res.fileList[0] && res.fileList[0].tempFileURL;
+        if (!tempUrl) return;
+        wx.downloadFile({
+          url: tempUrl,
+          success: dlRes => {
+            wx.getFileSystemManager().readFile({
+              filePath: dlRes.tempFilePath,
+              encoding: 'utf8',
+              success: fileRes => {
+                try {
+                  const animData = JSON.parse(fileRes.data);
+                  app.globalData.lottieJsonCache[filename] = animData; // 写入全局缓存
+                  if (this.data.activeTab === requestedTab) {
+                    this._renderLottie(animData);
+                  }
+                } catch (e) { console.error('Lottie JSON parse error:', e); }
+              },
+              fail: err => console.error('Read lottie file error:', err)
+            });
+          },
+          fail: err => console.error('Download lottie error:', err)
+        });
+      },
+      fail: err => console.error('getTempFileURL lottie error:', err)
+    });
+  },
+
+  _renderLottie(animationData) {
+    const query = this.createSelectorQuery();
+    query.select('#lottie-canvas').fields({ node: true, size: true }).exec(res => {
+      if (!res || !res[0] || !res[0].node) return;
+      const canvas = res[0].node;
+      const context = canvas.getContext('2d');
+      const dpr = wx.getSystemInfoSync().pixelRatio;
+      canvas.width  = res[0].width  * dpr;
+      canvas.height = res[0].height * dpr;
+      stripLottieExpressions(animationData);
+      lottie.setup(canvas);
+      this._lottieAnim = lottie.loadAnimation({
+        loop: true,
+        autoplay: true,
+        animationData,
+        rendererSettings: { context }
+      });
+    });
+  },
 
   // ========================
   // Holidays & Events
@@ -204,6 +313,7 @@ Page({
     if (tab === this.data.activeTab) return;
     this.setData({ activeTab: tab });
     this._selectForActiveTab();
+    this._pickAndPlayLottie();
   },
 
   _selectForActiveTab() {
@@ -277,6 +387,7 @@ Page({
       showArrivedOverlay: false,
       showProgressBar: false,
       progressPercent: 0,
+      showEndedPhrase: false,
     });
   },
 
@@ -350,7 +461,7 @@ Page({
             const expiredAgoMs = Date.now() - eventDateTime.getTime();
             if (expiredAgoMs < 10000) {
               // 刚刚到期（10秒内）：播放"未来已来"动画，2.5s 后重新加载
-              this.setData({ showArrivedOverlay: true, mottoText: '时间已经到啦！', mottoVisible: true });
+              this.setData({ showArrivedOverlay: true, showEndedPhrase: true, mottoText: '时间已经到啦！', mottoVisible: true });
               const t = setTimeout(() => {
                 this.setData({ showArrivedOverlay: false });
                 this._arrivedShown = false;
@@ -359,7 +470,7 @@ Page({
               this._flipTimers.push(t);
             } else {
               // 宽限期内（已过期但不超过1天）：直接展示已到达状态，不重播动画
-              this.setData({ showProgressBar: true, progressPercent: 100, mottoText: '时间已经到啦！', mottoVisible: true });
+              this.setData({ showProgressBar: true, progressPercent: 100, showEndedPhrase: true, mottoText: '时间已经到啦！', mottoVisible: true });
             }
           }
         }
@@ -469,17 +580,23 @@ Page({
   // ========================
 
   onTapEventName() { this.setData({ showEventList: true }); },
-  onCloseEventList() { this.setData({ showEventList: false }); },
+  onCloseEventList() {
+    if (this._lottieAnim) { this._lottieAnim.destroy(); this._lottieAnim = null; }
+    this.setData({ showEventList: false }, () => { this._pickAndPlayLottie(); });
+  },
 
   onSelectEvent(e) {
     const id = e.currentTarget.dataset.id;
     const { currentTabEvents } = this.data;
     const event = currentTabEvents.find(ev => (ev._id || ev.id) === id);
     if (event) {
-      this.setData({ currentEvent: event, showEventList: false });
-      this._resetDigits();
-      this._computeEventMeta();
-      this._updateCountdown();
+      if (this._lottieAnim) { this._lottieAnim.destroy(); this._lottieAnim = null; }
+      this.setData({ currentEvent: event, showEventList: false }, () => {
+        this._resetDigits();
+        this._computeEventMeta();
+        this._updateCountdown();
+        this._pickAndPlayLottie();
+      });
     }
   },
 

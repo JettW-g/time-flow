@@ -5,9 +5,15 @@ Page({
   data: {
     userInfo: null,
     activeEvents: [],
+    activePastEvents: [],
+    activeFutureEvents: [],
+    activeDisplayEvents: [],
+    activeSubTab: 'all',       // 'all' | 'past' | 'future'
     archivedEvents: [],
     archivedFutureEvents: [],
     archivedPastEvents: [],
+    archivedDisplayEvents: [],
+    archivedSubTab: 'all',     // 'all' | 'past' | 'future'
     activeCount: 0,
     archivedCount: 0,
     totalCount: 0,
@@ -94,11 +100,20 @@ Page({
         // 已归档子分类：循环事件归入"未来事件"列
         const archivedFutureEvents = archivedEvents.filter(e => !e.wasOriginallyPast || e.isRecurring);
         const archivedPastEvents   = archivedEvents.filter(e => e.wasOriginallyPast && !e.isRecurring);
+        // 进行中子分类
+        const activePastEvents   = activeEvents.filter(e => e.wasOriginallyPast);
+        const activeFutureEvents = activeEvents.filter(e => !e.wasOriginallyPast);
+        const { activeSubTab, archivedSubTab } = this.data;
+        const getDisplay = (tab, all, past, future) => tab === 'past' ? past : tab === 'future' ? future : all;
         this.setData({
           activeEvents,
+          activePastEvents,
+          activeFutureEvents,
+          activeDisplayEvents: getDisplay(activeSubTab, activeEvents, activePastEvents, activeFutureEvents),
           archivedEvents,
           archivedFutureEvents,
           archivedPastEvents,
+          archivedDisplayEvents: getDisplay(archivedSubTab, archivedEvents, archivedPastEvents, archivedFutureEvents),
           activeCount: activeEvents.length,
           archivedCount: archivedEvents.length,
           totalCount: all.length,
@@ -215,15 +230,20 @@ Page({
 
     wx.cloud.database().collection('events').doc(id).remove()
       .then(() => {
-        const activeEvents        = this.data.activeEvents.filter(ev => ev._id !== id);
-        const archivedEvents      = this.data.archivedEvents.filter(ev => ev._id !== id);
-        const archivedFutureEvents = this.data.archivedFutureEvents.filter(ev => ev._id !== id);
-        const archivedPastEvents   = this.data.archivedPastEvents.filter(ev => ev._id !== id);
+        const f = arr => arr.filter(ev => ev._id !== id);
+        const activeEvents         = f(this.data.activeEvents);
+        const activePastEvents     = f(this.data.activePastEvents);
+        const activeFutureEvents   = f(this.data.activeFutureEvents);
+        const archivedEvents       = f(this.data.archivedEvents);
+        const archivedFutureEvents = f(this.data.archivedFutureEvents);
+        const archivedPastEvents   = f(this.data.archivedPastEvents);
+        const { activeSubTab, archivedSubTab } = this.data;
+        const getDisplay = (tab, all, past, future) => tab === 'past' ? past : tab === 'future' ? future : all;
         this.setData({
-          activeEvents,
-          archivedEvents,
-          archivedFutureEvents,
-          archivedPastEvents,
+          activeEvents, activePastEvents, activeFutureEvents,
+          activeDisplayEvents: getDisplay(activeSubTab, activeEvents, activePastEvents, activeFutureEvents),
+          archivedEvents, archivedFutureEvents, archivedPastEvents,
+          archivedDisplayEvents: getDisplay(archivedSubTab, archivedEvents, archivedPastEvents, archivedFutureEvents),
           activeCount: activeEvents.length,
           archivedCount: archivedEvents.length,
           totalCount: activeEvents.length + archivedEvents.length,
@@ -243,22 +263,52 @@ Page({
   onSwipeEvent(e) {
     const id = e.currentTarget.dataset.id;
     const toggle = arr => arr.map(ev => ({ ...ev, swipeOpen: ev._id === id ? !ev.swipeOpen : false }));
+    const activeEvents         = toggle(this.data.activeEvents);
+    const activePastEvents     = toggle(this.data.activePastEvents);
+    const activeFutureEvents   = toggle(this.data.activeFutureEvents);
+    const archivedEvents       = toggle(this.data.archivedEvents);
+    const archivedFutureEvents = toggle(this.data.archivedFutureEvents);
+    const archivedPastEvents   = toggle(this.data.archivedPastEvents);
+    const { activeSubTab, archivedSubTab } = this.data;
+    const getDisplay = (tab, all, past, future) => tab === 'past' ? past : tab === 'future' ? future : all;
     this.setData({
-      activeEvents:         toggle(this.data.activeEvents),
-      archivedEvents:       toggle(this.data.archivedEvents),
-      archivedFutureEvents: toggle(this.data.archivedFutureEvents),
-      archivedPastEvents:   toggle(this.data.archivedPastEvents)
+      activeEvents, activePastEvents, activeFutureEvents,
+      activeDisplayEvents: getDisplay(activeSubTab, activeEvents, activePastEvents, activeFutureEvents),
+      archivedEvents, archivedFutureEvents, archivedPastEvents,
+      archivedDisplayEvents: getDisplay(archivedSubTab, archivedEvents, archivedPastEvents, archivedFutureEvents)
     });
   },
 
   onCloseSwipe() {
     const close = arr => arr.map(ev => ({ ...ev, swipeOpen: false }));
+    const activeEvents         = close(this.data.activeEvents);
+    const activePastEvents     = close(this.data.activePastEvents);
+    const activeFutureEvents   = close(this.data.activeFutureEvents);
+    const archivedEvents       = close(this.data.archivedEvents);
+    const archivedFutureEvents = close(this.data.archivedFutureEvents);
+    const archivedPastEvents   = close(this.data.archivedPastEvents);
+    const { activeSubTab, archivedSubTab } = this.data;
+    const getDisplay = (tab, all, past, future) => tab === 'past' ? past : tab === 'future' ? future : all;
     this.setData({
-      activeEvents:         close(this.data.activeEvents),
-      archivedEvents:       close(this.data.archivedEvents),
-      archivedFutureEvents: close(this.data.archivedFutureEvents),
-      archivedPastEvents:   close(this.data.archivedPastEvents)
+      activeEvents, activePastEvents, activeFutureEvents,
+      activeDisplayEvents: getDisplay(activeSubTab, activeEvents, activePastEvents, activeFutureEvents),
+      archivedEvents, archivedFutureEvents, archivedPastEvents,
+      archivedDisplayEvents: getDisplay(archivedSubTab, archivedEvents, archivedPastEvents, archivedFutureEvents)
     });
+  },
+
+  onActiveSubTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    const { activeEvents, activePastEvents, activeFutureEvents } = this.data;
+    const map = { all: activeEvents, past: activePastEvents, future: activeFutureEvents };
+    this.setData({ activeSubTab: tab, activeDisplayEvents: map[tab] || activeEvents });
+  },
+
+  onArchivedSubTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    const { archivedEvents, archivedPastEvents, archivedFutureEvents } = this.data;
+    const map = { all: archivedEvents, past: archivedPastEvents, future: archivedFutureEvents };
+    this.setData({ archivedSubTab: tab, archivedDisplayEvents: map[tab] || archivedEvents });
   },
 
   // ========================

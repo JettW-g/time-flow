@@ -87,15 +87,27 @@
     <view class="section-header">
       <view class="section-title-wrap">
         <view class="section-status-dot dot-active"></view>
-        <text class="section-title">进行中</text>
         <text class="section-count">{{activeCount}}</text>
       </view>
       <text class="section-hint">左滑编辑/删除</text>
     </view>
 
-    <view wx:if="{{activeEvents.length > 0}}" class="events-list">
+    <!-- 进行中 子标签 -->
+    <view class="sub-tab-row">
+      <view class="sub-tab-item {{activeSubTab === 'all' ? 'sub-tab-active' : ''}}" bindtap="onActiveSubTab" data-tab="all">
+        <text class="sub-tab-text">进行中</text>
+      </view>
+      <view class="sub-tab-item {{activeSubTab === 'past' ? 'sub-tab-active' : ''}}" bindtap="onActiveSubTab" data-tab="past">
+        <text class="sub-tab-text">过去已发生</text>
+      </view>
+      <view class="sub-tab-item {{activeSubTab === 'future' ? 'sub-tab-active' : ''}}" bindtap="onActiveSubTab" data-tab="future">
+        <text class="sub-tab-text">未来倒计时</text>
+      </view>
+    </view>
+
+    <view wx:if="{{activeDisplayEvents.length > 0}}" class="events-list">
       <view
-        wx:for="{{activeEvents}}"
+        wx:for="{{activeDisplayEvents}}"
         wx:key="_id"
         class="event-item-wrap"
         catchtap="onSwipeEvent"
@@ -133,7 +145,7 @@
       </view>
     </view>
     <view wx:else class="section-empty">
-      <text class="section-empty-text">暂无进行中的事件</text>
+      <text class="section-empty-text">暂无相关事件</text>
     </view>
 
     <!-- ── 已归档 ── -->
@@ -146,93 +158,59 @@
         </view>
       </view>
 
-      <!-- 已归档 · 未来事件（含循环） -->
-      <view wx:if="{{archivedFutureEvents.length > 0}}">
-        <view class="archived-sub-header">
-          <text class="archived-sub-label">未来事件</text>
+      <!-- 已归档 子标签 -->
+      <view class="sub-tab-row">
+        <view class="sub-tab-item {{archivedSubTab === 'all' ? 'sub-tab-active' : ''}}" bindtap="onArchivedSubTab" data-tab="all">
+          <text class="sub-tab-text">全部</text>
         </view>
-        <view class="events-list">
-          <view
-            wx:for="{{archivedFutureEvents}}"
-            wx:key="_id"
-            class="event-item-wrap"
-            catchtap="onSwipeEvent"
-            data-id="{{item._id}}"
-          >
-            <view class="swipe-actions">
-              <view class="swipe-edit" catchtap="onEditEvent" data-id="{{item._id}}">
-                <text class="swipe-action-text">编辑</text>
-              </view>
-              <view class="swipe-delete" catchtap="onDeleteEventConfirm" data-id="{{item._id}}" data-name="{{item.name}}">
-                <text class="swipe-action-text">删除</text>
-              </view>
+        <view class="sub-tab-item {{archivedSubTab === 'past' ? 'sub-tab-active' : ''}}" bindtap="onArchivedSubTab" data-tab="past">
+          <text class="sub-tab-text">过去已发生</text>
+        </view>
+        <view class="sub-tab-item {{archivedSubTab === 'future' ? 'sub-tab-active' : ''}}" bindtap="onArchivedSubTab" data-tab="future">
+          <text class="sub-tab-text">未来倒计时</text>
+        </view>
+      </view>
+
+      <view wx:if="{{archivedDisplayEvents.length > 0}}" class="events-list">
+        <view
+          wx:for="{{archivedDisplayEvents}}"
+          wx:key="_id"
+          class="event-item-wrap"
+          catchtap="onSwipeEvent"
+          data-id="{{item._id}}"
+        >
+          <view class="swipe-actions">
+            <view class="swipe-edit" catchtap="onEditEvent" data-id="{{item._id}}">
+              <text class="swipe-action-text">编辑</text>
             </view>
-            <view class="event-card {{item.swipeOpen ? 'swiped' : ''}} expired">
-              <view class="event-card-left">
-                <view class="event-type-bar type-{{item.type}}"></view>
-                <view class="event-card-content">
-                  <view class="event-card-top">
-                    <text class="event-card-name">{{item.name}}</text>
-                    <view class="event-tags">
-                      <text class="event-tag-direction tag-future">未来事件</text>
-                      <text wx:if="{{item.isRecurring}}" class="event-tag-recurring">循环</text>
-                    </view>
-                  </view>
-                  <view class="event-card-bottom">
-                    <text class="event-card-date">{{item.targetDate}} {{item.targetTime || ''}}</text>
+            <view class="swipe-delete" catchtap="onDeleteEventConfirm" data-id="{{item._id}}" data-name="{{item.name}}">
+              <text class="swipe-action-text">删除</text>
+            </view>
+          </view>
+          <view class="event-card {{item.swipeOpen ? 'swiped' : ''}} expired">
+            <view class="event-card-left">
+              <view class="event-type-bar type-{{item.type}}"></view>
+              <view class="event-card-content">
+                <view class="event-card-top">
+                  <text class="event-card-name">{{item.name}}</text>
+                  <view class="event-tags">
+                    <text class="event-tag-direction {{item.wasOriginallyPast ? 'tag-past' : 'tag-future'}}">{{item.wasOriginallyPast ? '过去事件' : '未来事件'}}</text>
+                    <text wx:if="{{item.isRecurring}}" class="event-tag-recurring">循环</text>
                   </view>
                 </view>
+                <view class="event-card-bottom">
+                  <text class="event-card-date">{{item.targetDate}} {{item.targetTime || ''}}</text>
+                </view>
               </view>
-              <view class="event-countdown-badge expired">
-                <text class="event-days-text">{{item.daysText}}</text>
-              </view>
+            </view>
+            <view class="event-countdown-badge expired">
+              <text class="event-days-text">{{item.daysText}}</text>
             </view>
           </view>
         </view>
       </view>
-
-      <!-- 已归档 · 过去事件 -->
-      <view wx:if="{{archivedPastEvents.length > 0}}">
-        <view class="archived-sub-header">
-          <text class="archived-sub-label">过去事件</text>
-        </view>
-        <view class="events-list">
-          <view
-            wx:for="{{archivedPastEvents}}"
-            wx:key="_id"
-            class="event-item-wrap"
-            catchtap="onSwipeEvent"
-            data-id="{{item._id}}"
-          >
-            <view class="swipe-actions">
-              <view class="swipe-edit" catchtap="onEditEvent" data-id="{{item._id}}">
-                <text class="swipe-action-text">编辑</text>
-              </view>
-              <view class="swipe-delete" catchtap="onDeleteEventConfirm" data-id="{{item._id}}" data-name="{{item.name}}">
-                <text class="swipe-action-text">删除</text>
-              </view>
-            </view>
-            <view class="event-card {{item.swipeOpen ? 'swiped' : ''}} expired">
-              <view class="event-card-left">
-                <view class="event-type-bar type-{{item.type}}"></view>
-                <view class="event-card-content">
-                  <view class="event-card-top">
-                    <text class="event-card-name">{{item.name}}</text>
-                    <view class="event-tags">
-                      <text class="event-tag-direction tag-past">过去事件</text>
-                    </view>
-                  </view>
-                  <view class="event-card-bottom">
-                    <text class="event-card-date">{{item.targetDate}} {{item.targetTime || ''}}</text>
-                  </view>
-                </view>
-              </view>
-              <view class="event-countdown-badge past-event">
-                <text class="event-days-text">{{item.daysText}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
+      <view wx:else class="section-empty">
+        <text class="section-empty-text">暂无相关归档事件</text>
       </view>
 
     </view>

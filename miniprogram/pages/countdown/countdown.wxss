@@ -133,8 +133,8 @@
   padding: 20rpx 28rpx 0;
 }
 
-/* ===== Duck decoration ===== */
-.duck-area {
+/* ===== Lottie animation area ===== */
+.lottie-area {
   flex: 1;
   width: 100%;
   display: flex;
@@ -144,10 +144,9 @@
   min-height: 200rpx;
 }
 
-.duck-image {
-  width: 620rpx;
-  height: 620rpx;
-  opacity: 0.9;
+.lottie-canvas {
+  width: 560rpx;
+  height: 560rpx;
 }
 
 /* ===== No Event State ===== */
@@ -168,6 +167,29 @@
 }
 .no-event-desc {
   font-size: 24rpx; color: #94A3B8; text-align: center; line-height: 1.6;
+}
+
+/* ===== Ended phrase (替代 event-header，倒计时到零后显示) ===== */
+.ended-phrase-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  padding: 22rpx 28rpx;
+  background: rgba(255,255,255,0.72);
+  border-radius: 24rpx;
+  border: 1rpx solid rgba(99,102,241,0.12);
+  box-shadow:
+    0 0 0 1rpx rgba(255,255,255,0.8) inset,
+    0 4rpx 16rpx rgba(99,102,241,0.07);
+  backdrop-filter: blur(8rpx);
+}
+.ended-phrase-text {
+  font-size: 40rpx; font-weight: 900;
+  color: #6366F1;
+  font-family: 'Heiti SC', 'STHeiti', 'PingFang SC', sans-serif;
+  letter-spacing: 4rpx;
 }
 
 /* ===== Event Header ===== */

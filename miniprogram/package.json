@@ -2,5 +2,7 @@
   "name": "timeflow-miniprogram",
   "version": "1.0.0",
   "description": "TimeFlow 倒计时小程序",
-  "dependencies": {}
+  "dependencies": {
+    "lottie-miniprogram": "^1.0.12"
+  }
 }

@@ -1,15 +1,23 @@
+// 所有 Lottie 云端文件列表（app 启动时预缓存）
+const LOTTIE_CLOUD_PREFIX = 'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/';
+const ALL_LOTTIE_FILES = [
+  'walk_cycling_shoes.json', 'car.json',
+  'singing_and_playing.json', 'hacker_it.json', 'data_visualization.json'
+];
+
 App({
   globalData: {
     userInfo: null,
     openid: null,
-    events: [],       // user personal events
-    holidays: {},     // holidays keyed by date string 'YYYY-MM-DD'
+    events: [],
+    holidays: {},
     pinnedEventId: null,
     settings: {
       offWorkTime: '18:00',
       showLunar: true
     },
-    isLoggedIn: false
+    isLoggedIn: false,
+    lottieJsonCache: {}   // filename → parsed animationData
   },
 
   onLaunch() {
@@ -18,6 +26,37 @@ App({
       traceUser: true
     });
     this.login();
+    this._prefetchLottieFiles();
+  },
+
+  // 启动时批量预下载所有 Lottie JSON，缓存到 globalData
+  _prefetchLottieFiles() {
+    const cache = this.globalData.lottieJsonCache;
+    const fileList = ALL_LOTTIE_FILES.map(f => LOTTIE_CLOUD_PREFIX + f);
+
+    wx.cloud.getTempFileURL({
+      fileList,
+      success: res => {
+        (res.fileList || []).forEach(file => {
+          if (!file.tempFileURL) return;
+          const filename = file.fileID.split('/').pop();
+          if (cache[filename]) return; // 已缓存，跳过
+          wx.downloadFile({
+            url: file.tempFileURL,
+            success: dlRes => {
+              wx.getFileSystemManager().readFile({
+                filePath: dlRes.tempFilePath,
+                encoding: 'utf8',
+                success: fileRes => {
+                  try { cache[filename] = JSON.parse(fileRes.data); } catch (e) {}
+                }
+              });
+            }
+          });
+        });
+      },
+      fail: err => console.error('Lottie prefetch getTempFileURL fail:', err)
+    });
   },
 
   login() {

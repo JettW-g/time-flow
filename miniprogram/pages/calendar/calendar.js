@@ -227,10 +227,18 @@ Page({
 
     const groups = [];
     const legalArr = Object.values(legalMap).sort((a, b) => a.date.localeCompare(b.date));
-    if (legalArr.length)      groups.push({ category: 'legal',         label: '法定节假日', color: '#EF5350', events: toItems(legalArr) });
-    if (traditional.length)  groups.push({ category: 'traditional',   label: '传统节日',   color: '#42A5F5', events: toItems(traditional) });
-    if (international.length)groups.push({ category: 'international', label: '国际节日',   color: '#AB47BC', events: toItems(international) });
-    if (custom.length)        groups.push({ category: 'custom',        label: '我的事件',   color: '#00BCD4', events: toItems(custom) });
+    // 合并所有节假日类型，统一展示为"节假日"，按名称+日期去重
+    const seenKeys = new Set();
+    const allHolidayItems = [...legalArr, ...traditional, ...international]
+      .filter(item => {
+        const key = `${item.name}|${item.date}`;
+        if (seenKeys.has(key)) return false;
+        seenKeys.add(key);
+        return true;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (allHolidayItems.length) groups.push({ category: 'holiday', label: '节假日', color: '#EF5350', events: toItems(allHolidayItems) });
+    if (custom.length)          groups.push({ category: 'custom',  label: '我的事件', color: '#00BCD4', events: toItems(custom) });
 
     this.setData({ monthEventGroups: groups });
   },
@@ -311,26 +319,30 @@ Page({
 
     // Legal holiday
     const legalInfo = this._holidayMap[date];
+    const seenHolidayNames = new Set();
     if (legalInfo && legalInfo.isHoliday) {
+      seenHolidayNames.add(legalInfo.name);
       events.push({
         name: legalInfo.name,
         category: 'legal',
-        categoryLabel: '法定节假日',
+        categoryLabel: '节假日',
         color: '#EF5350',
+        isHoliday: true,
         daysText: this._getDaysText(date)
       });
     }
 
-    // All holidays on this date
+    // All holidays on this date (skip legal and skip duplicates by name)
     this._allHolidays.filter(h => h.date === date).forEach(h => {
-      if (h.category !== 'legal') {
-        const labels = { traditional: '传统节日', international: '国际节日' };
+      if (h.category !== 'legal' && !seenHolidayNames.has(h.name)) {
+        seenHolidayNames.add(h.name);
         const colors = { traditional: '#42A5F5', international: '#AB47BC' };
         events.push({
           name: h.name,
           category: h.category,
-          categoryLabel: labels[h.category] || '节日',
+          categoryLabel: '节假日',
           color: colors[h.category] || '#78909C',
+          isHoliday: true,
           daysText: this._getDaysText(date)
         });
       }
@@ -387,6 +399,36 @@ Page({
     wx.navigateTo({
       url: `/pages/event-edit/event-edit?date=${selectedDate}`
     });
+  },
+
+  onAddHolidayEvent(e) {
+    const { name, date } = e.currentTarget.dataset;
+    if (!app.globalData.isLoggedIn) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+    const db = wx.cloud.database();
+    const newEvent = {
+      name,
+      targetDate: date,
+      targetTime: '00:00',
+      type: 'custom_once',
+      icon: '⭐',
+      isRecurring: false,
+      note: '',
+      createdAt: db.serverDate()
+    };
+    wx.showLoading({ title: '添加中…', mask: true });
+    db.collection('events').add({ data: newEvent })
+      .then(() => {
+        wx.hideLoading();
+        wx.showToast({ title: '已添加到关注', icon: 'success' });
+        this._loadUserEvents();
+      })
+      .catch(() => {
+        wx.hideLoading();
+        wx.showToast({ title: '添加失败', icon: 'error' });
+      });
   },
 
   // ========================

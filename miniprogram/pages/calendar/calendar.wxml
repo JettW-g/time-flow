@@ -82,15 +82,7 @@
   <view class="legend">
     <view class="legend-item">
       <view class="legend-dot" style="background:#EF5350;"></view>
-      <text class="legend-text">法定节假日</text>
-    </view>
-    <view class="legend-item">
-      <view class="legend-dot" style="background:#42A5F5;"></view>
-      <text class="legend-text">传统节日</text>
-    </view>
-    <view class="legend-item">
-      <view class="legend-dot" style="background:#AB47BC;"></view>
-      <text class="legend-text">国际节日</text>
+      <text class="legend-text">节假日</text>
     </view>
     <view class="legend-item">
       <view class="legend-dot" style="background:#00BCD4;"></view>
@@ -126,6 +118,16 @@
           <view class="event-info-meta">
             <text class="event-category-tag" style="color: {{item.color}};">{{item.categoryLabel}}</text>
             <text class="event-days-text">{{item.daysText}}</text>
+            <!-- 节假日：一键添加为关注事件（内联，避免溢出） -->
+            <view
+              wx:if="{{item.isHoliday}}"
+              class="holiday-add-btn"
+              catchtap="onAddHolidayEvent"
+              data-name="{{item.name}}"
+              data-date="{{selectedDate}}"
+            >
+              <text class="holiday-add-text">+ 添加</text>
+            </view>
           </view>
         </view>
       </view>

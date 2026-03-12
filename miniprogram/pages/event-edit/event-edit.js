@@ -45,7 +45,7 @@ Page({
   },
 
   onLoad(options) {
-    const { id, date } = options;
+    const { id, date, name } = options;
     this._initPickerData();
 
     if (id) {
@@ -65,6 +65,10 @@ Page({
         this._updateIsPastDate(dateStr);
       }
       this._updateRecurringDefaults('custom_once');
+      // Pre-fill name if provided (from calendar holiday quick-add)
+      if (name) {
+        this.setData({ 'form.name': decodeURIComponent(name) });
+      }
     }
   },
 

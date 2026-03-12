@@ -87,8 +87,11 @@
 
     <block wx:if="{{currentEvent}}">
 
-      <!-- 事件标题 -->
-      <view class="event-header" bindtap="onTapEventName">
+      <!-- 事件标题：倒计时结束后显示特殊短语 -->
+      <view wx:if="{{showEndedPhrase}}" class="ended-phrase-wrap">
+        <text class="ended-phrase-text">是终点，也是起点。</text>
+      </view>
+      <view wx:else class="event-header" bindtap="onTapEventName">
         <text class="event-icon" wx:if="{{currentEvent.icon}}">{{currentEvent.icon}}</text>
         <text class="event-name">{{currentEvent.name}}</text>
         <view class="pin-badge" wx:if="{{pinnedEventId && (currentEvent._id === pinnedEventId || currentEvent.id === pinnedEventId)}}">
@@ -179,13 +182,9 @@
 
     </block>
 
-    <!-- 鸭子装饰大图 -->
-    <view class="duck-area">
-      <image
-        class="duck-image"
-        src="{{activeTab === 'past' ? tangGifUrl : rushGifUrl}}"
-        mode="aspectFit"
-      />
+    <!-- Lottie 动画区域 -->
+    <view class="lottie-area" wx:if="{{!showEventList}}">
+      <canvas type="2d" id="lottie-canvas" class="lottie-canvas"></canvas>
     </view>
 
   </view>
