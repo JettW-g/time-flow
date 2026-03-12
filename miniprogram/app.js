@@ -2,7 +2,11 @@
 const LOTTIE_CLOUD_PREFIX = 'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/';
 const ALL_LOTTIE_FILES = [
   'walk_cycling_shoes.json', 'car.json',
-  'singing_and_playing.json', 'hacker_it.json', 'data_visualization.json'
+  'singing_and_playing.json', 'hacker_it.json', 'data_visualization.json',
+  'running/bulbasaur.json', 'running/dog_walking.json', 'running/policeman_walk.json',
+  'running/walking_duck.json', 'running/walking_pencil.json',
+  'life/retire.json', 'life/study1.json', 'life/study2.json', 'life/wedding.json',
+  'festival/happy_halloween.json', 'festival/christmas_tree.json'
 ];
 
 App({

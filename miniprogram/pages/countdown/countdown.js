@@ -7,8 +7,39 @@ const MOTTOS_PAST = ['时光荏苒，一去不返。', '时间在指尖流淌…
 
 // Lottie 云端文件 ID
 const CLOUD_PREFIX = 'cloud://cloud1-7gqgfcq3682191c1.636c-cloud1-7gqgfcq3682191c1-1409058392/';
-const FUTURE_LOTTIE_POOL = ['walk_cycling_shoes.json', 'car.json'];
-const PAST_LOTTIE_POOL   = ['singing_and_playing.json', 'data_visualization.json'];
+// filename → cloud path (for fallback download)
+const LOTTIE_FILE_PATHS = {
+  'walk_cycling_shoes.json': 'walk_cycling_shoes.json',
+  'car.json': 'car.json',
+  'singing_and_playing.json': 'singing_and_playing.json',
+  'hacker_it.json': 'hacker_it.json',
+  'data_visualization.json': 'data_visualization.json',
+  'bulbasaur.json': 'running/bulbasaur.json',
+  'dog_walking.json': 'running/dog_walking.json',
+  'policeman_walk.json': 'running/policeman_walk.json',
+  'walking_duck.json': 'running/walking_duck.json',
+  'walking_pencil.json': 'running/walking_pencil.json',
+  'retire.json': 'life/retire.json',
+  'study1.json': 'life/study1.json',
+  'study2.json': 'life/study2.json',
+  'wedding.json': 'life/wedding.json',
+  'happy_halloween.json': 'festival/happy_halloween.json',
+  'christmas_tree.json': 'festival/christmas_tree.json',
+};
+const FUTURE_LOTTIE_POOL = [
+  'walk_cycling_shoes.json', 'car.json',
+  'bulbasaur.json', 'dog_walking.json', 'policeman_walk.json',
+  'walking_duck.json', 'walking_pencil.json'
+];
+const PAST_LOTTIE_POOL = ['singing_and_playing.json', 'data_visualization.json'];
+// 特定事件名固定使用的 Lottie 文件
+const EVENT_NAME_LOTTIE = {
+  '高考': 'study1.json',
+  '结婚': 'wedding.json',
+  '退休': 'retire.json',
+  '万圣节': 'happy_halloween.json',
+  '圣诞节': 'christmas_tree.json',
+};
 
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -154,9 +185,15 @@ Page({
   // ========================
 
   _pickAndPlayLottie() {
-    const { activeTab } = this.data;
-    const pool = activeTab === 'future' ? FUTURE_LOTTIE_POOL : PAST_LOTTIE_POOL;
-    const filename = pickRandom(pool);
+    const { activeTab, currentEvent } = this.data;
+    let filename;
+    // 特定事件名使用固定动画（仅未来 tab）
+    if (activeTab === 'future' && currentEvent && EVENT_NAME_LOTTIE[currentEvent.name]) {
+      filename = EVENT_NAME_LOTTIE[currentEvent.name];
+    } else {
+      const pool = activeTab === 'future' ? FUTURE_LOTTIE_POOL : PAST_LOTTIE_POOL;
+      filename = pickRandom(pool);
+    }
     const globalCache = app.globalData.lottieJsonCache;
 
     // 销毁旧动画
@@ -166,16 +203,15 @@ Page({
     }
 
     if (globalCache[filename]) {
-      // 全局缓存命中：等待 canvas 渲染完成后直接渲染（极短延迟）
       setTimeout(() => {
         if (this.data.activeTab === activeTab) {
           this._renderLottie(globalCache[filename]);
         }
       }, 50);
     } else {
-      // 缓存未命中（一般仅首次冷启动网络极慢时）：fallback 走云端下载
+      const cloudPath = LOTTIE_FILE_PATHS[filename] || filename;
       setTimeout(() => {
-        this._fetchAndRenderLottie(CLOUD_PREFIX + filename, filename, activeTab);
+        this._fetchAndRenderLottie(CLOUD_PREFIX + cloudPath, filename, activeTab);
       }, 50);
     }
   },
