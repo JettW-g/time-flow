@@ -116,7 +116,7 @@
 
         <!-- 倒计时结束覆盖层 -->
         <view wx:if="{{showArrivedOverlay}}" class="arrived-overlay">
-          <text class="arrived-text">是终点，也是起点。</text>
+          <text class="arrived-text">是终点，也是起点</text>
         </view>
 
         <!-- 天 行 -->

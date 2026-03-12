@@ -53,9 +53,10 @@
     <view class="form-section">
       <text class="form-label">目标日期 <text class="required">*</text></text>
       <picker
-        mode="multiSelector"
-        range="{{[years, months, days]}}"
-        value="{{[selectedYearIndex, selectedMonthIndex, selectedDayIndex]}}"
+        mode="date"
+        value="{{form.date}}"
+        start="{{minDate}}"
+        end="{{maxDate}}"
         bindchange="onDateChange"
       >
         <view class="picker-display">
@@ -69,9 +70,8 @@
     <view class="form-section">
       <text class="form-label">目标时间（可选）</text>
       <picker
-        mode="multiSelector"
-        range="{{[hours, minutes]}}"
-        value="{{[selectedHourIndex, selectedMinuteIndex]}}"
+        mode="time"
+        value="{{form.time}}"
         bindchange="onTimeChange"
       >
         <view class="picker-display">

@@ -167,10 +167,13 @@ Page({
   // ========================
 
   onChooseAvatar(e) {
+    if (this._choosingAvatar) return;
+    this._choosingAvatar = true;
     const { avatarUrl } = e.detail;
     const userInfo = { ...(this.data.userInfo || {}), avatarUrl };
     this.setData({ userInfo });
     app.saveUserInfo(userInfo);
+    setTimeout(() => { this._choosingAvatar = false; }, 1000);
   },
 
   onEditName() {
