@@ -236,6 +236,13 @@ Page({
 
     db.collection('events').get().then(res => {
       const allEvents = res.data || [];
+      // 重名检测
+      const nameExists = allEvents.some(e => e.name === form.name.trim());
+      if (nameExists) {
+        this.setData({ isSubmitting: false });
+        wx.showToast({ title: '已有同名事件', icon: 'none' });
+        return;
+      }
       const count = allEvents.filter(e => {
         const t = new Date(`${e.targetDate}T${e.targetTime || '00:00'}:00`);
         return isPast ? t < now : t >= now;

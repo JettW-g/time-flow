@@ -241,10 +241,6 @@ function getSystemEvents(offWorkTime = '18:00', holidayMap = {}) {
   const monday = new Date(now); monday.setDate(now.getDate() - daysFromMonday); monday.setHours(0,0,0,0);
   events.push({ id: 'sys_weekend', name: '周末', targetDate: weekend.date, targetTime: weekend.time, type: 'system', isSystem: true, isRecurring: false, progressStart: formatDate(monday) + 'T00:00:00' });
 
-  // 高考
-  const gaokao = getNextGaokaoTarget();
-  events.push({ id: 'sys_gaokao', name: '高考', targetDate: gaokao.date, targetTime: gaokao.time, type: 'system', isSystem: true, isRecurring: false });
-
   // 过年
   const newYear = getNextNewYearTarget();
   events.push({ id: 'sys_newyear', name: '过年', targetDate: newYear.date, targetTime: newYear.time, type: 'system', isSystem: true, isRecurring: false });

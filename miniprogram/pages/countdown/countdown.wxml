@@ -126,7 +126,7 @@
               <template is="{{activeTab === 'past' ? 'slideCardUp' : 'slideCardDown'}}" data="{{...item}}" />
             </view>
           </view>
-          <view class="unit-label-wrap"><text class="unit-label">天</text><text wx:if="{{dayYMD}}" class="ymd-label"> — 还有{{dayYMD}}</text></view>
+          <view class="unit-label-wrap"><text class="unit-label">天</text><text wx:if="{{dayYMD}}" class="ymd-label"> / {{dayYMD}}</text></view>
         </view>
 
         <!-- 分割线 -->
@@ -219,7 +219,7 @@
               <text class="event-item-date">{{item.targetDate}} {{item.targetTime || '00:00'}}</text>
             </view>
             <view class="event-item-actions">
-              <view wx:if="{{!item.isSystem}}" class="quick-edit-btn" catchtap="onQuickEditTime" data-id="{{item._id || item.id}}" data-date="{{item.targetDate}}" data-time="{{item.targetTime || '00:00'}}">
+              <view class="quick-edit-btn" catchtap="onQuickEditTime" data-id="{{item._id || item.id}}" data-date="{{item.targetDate}}" data-time="{{item.targetTime || '00:00'}}">
                 <text class="quick-edit-text">调整时间</text>
               </view>
               <view
@@ -364,15 +364,6 @@
           </view>
         </picker>
       </view>
-      <view class="bs-row">
-        <text class="bs-label">时间</text>
-        <picker mode="time" value="{{specialTime}}" bindchange="onSpecialTimeChange">
-          <view class="bs-picker-display">
-            <text class="bs-picker-value">{{specialTime}}</text>
-            <text class="bs-picker-arrow">›</text>
-          </view>
-        </picker>
-      </view>
     </view>
     <view class="bs-actions">
       <view class="bs-btn-cancel" bindtap="onCancelSpecialTime"><text>取消</text></view>
@@ -388,7 +379,7 @@
       <view class="sheet-close" bindtap="onCancelRetire"><text class="close-icon">×</text></view>
     </view>
     <view class="bottom-sheet-body">
-      <text class="bs-tip">填写出生年月和性别，计算退休倒计时（男65岁，女60岁）</text>
+      <text class="bs-tip">填写出生年月日和性别，计算退休倒计时（男65岁，女60岁）</text>
       <view class="bs-row">
         <text class="bs-label">性别</text>
         <view class="bs-gender-row">
@@ -402,7 +393,21 @@
       </view>
       <view class="bs-row">
         <text class="bs-label">出生月份</text>
-        <input class="bs-input" type="number" placeholder="1-12" maxlength="2" value="{{retireBirthMonth}}" bindinput="onRetireBirthMonthInput" />
+        <picker mode="selector" range="{{retireMonths}}" value="{{retireBirthMonthIdx}}" bindchange="onRetireMonthChange">
+          <view class="bs-picker-display">
+            <text class="bs-picker-value">{{retireMonths[retireBirthMonthIdx]}}</text>
+            <text class="bs-picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+      <view class="bs-row">
+        <text class="bs-label">出生日期</text>
+        <picker mode="selector" range="{{retireDays}}" value="{{retireBirthDayIdx}}" bindchange="onRetireDayChange">
+          <view class="bs-picker-display">
+            <text class="bs-picker-value">{{retireDays[retireBirthDayIdx]}}</text>
+            <text class="bs-picker-arrow">›</text>
+          </view>
+        </picker>
       </view>
     </view>
     <view class="bs-actions">

@@ -64,7 +64,7 @@ Page({
     mottoText: '',
     mottoVisible: false,
     // ── Digit flip cards ───────────────────────────────
-    dayDigits: [emptyDigit(), emptyDigit(), emptyDigit(), emptyDigit()],
+    dayDigits: [emptyDigit(), emptyDigit(), emptyDigit(), emptyDigit(), emptyDigit()],
     hDigits:   [emptyDigit(), emptyDigit()],
     mDigits:   [emptyDigit(), emptyDigit()],
     sDigits:   [emptyDigit(), emptyDigit()],
@@ -78,8 +78,11 @@ Page({
     // Retirement sheet
     showRetireSheet: false,
     retireBirthYear: '',
-    retireBirthMonth: '',
+    retireBirthMonthIdx: 0,
+    retireBirthDayIdx: 0,
     retireGender: 'male',
+    retireMonths: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    retireDays: Array.from({length: 31}, (_, i) => `${i+1}日`),
     // Special event time sheet
     showSpecialTimeSheet: false,
     specialEventType: '',
@@ -378,7 +381,7 @@ Page({
     const zero = () => emptyDigit();
     this._arrivedShown = false;
     this.setData({
-      dayDigits: [zero(), zero(), zero(), zero()],
+      dayDigits: [zero(), zero(), zero(), zero(), zero()],
       hDigits:   [zero(), zero()],
       mDigits:   [zero(), zero()],
       sDigits:   [zero(), zero()],
@@ -429,7 +432,7 @@ Page({
             countdown: result,
             targetTimeStr: `${currentEvent.targetDate} ${t0.length === 5 ? t0 + ':00' : t0}`
           });
-          '0000'.split('').forEach((v, i) => {
+          '00000'.split('').forEach((v, i) => {
             if (v !== this.data.dayDigits[i].curr) this._triggerFlip('dayDigits', i, v);
           });
           '00'.split('').forEach((v, i) => {
@@ -446,7 +449,7 @@ Page({
           if (!this._arrivedShown) {
             this._arrivedShown = true;
             // 先把数字归零
-            '0000'.split('').forEach((v, i) => {
+            '00000'.split('').forEach((v, i) => {
               if (v !== this.data.dayDigits[i].curr) this._triggerFlip('dayDigits', i, v);
             });
             '00'.split('').forEach((v, i) => {
@@ -480,7 +483,7 @@ Page({
     const targetTimeStr = `${currentEvent.targetDate} ${t.length === 5 ? t + ':00' : t}`;
     this.setData({ countdown: result, targetTimeStr });
 
-    const d = String(result.days).padStart(4, '0');
+    const d = String(Math.min(result.days, 99999)).padStart(5, '0');
     const h = padZero(result.hours);
     const m = padZero(result.minutes);
     const s = padZero(result.seconds);
@@ -631,27 +634,48 @@ Page({
   onCancelQuickEdit() { this.setData({ showQuickEdit: false }); },
 
   onConfirmQuickEdit() {
-    const { quickEditEventId, quickEditDate, quickEditTime } = this.data;
+    const { quickEditEventId, quickEditDate, quickEditTime, currentTabEvents } = this.data;
     if (!quickEditDate) { wx.showToast({ title: '请选择日期', icon: 'none' }); return; }
     wx.showLoading({ title: '保存中…', mask: true });
-    wx.cloud.database().collection('events').doc(quickEditEventId).update({
-      data: { targetDate: quickEditDate, targetTime: quickEditTime, updatedAt: wx.cloud.database().serverDate() }
-    }).then(() => {
-      wx.hideLoading();
-      wx.showToast({ title: '已更新', icon: 'success' });
-      this.setData({ showQuickEdit: false });
-      this._loadEvents();
-    }).catch(() => {
-      wx.hideLoading();
-      wx.showToast({ title: '更新失败', icon: 'error' });
-    });
+    if (quickEditEventId && String(quickEditEventId).startsWith('sys_')) {
+      // 系统事件：创建一条自定义事件记录
+      const sysEvent = currentTabEvents.find(e => e.id === quickEditEventId);
+      const name = sysEvent ? sysEvent.name : '';
+      const db = wx.cloud.database();
+      db.collection('events').where({ name }).get().then(res => {
+        if (res.data && res.data.length > 0) {
+          wx.hideLoading();
+          wx.showToast({ title: '已有同名事件', icon: 'none' });
+          return;
+        }
+        return db.collection('events').add({ data: { name, icon: '', targetDate: quickEditDate, targetTime: quickEditTime, type: 'custom_once', isRecurring: false, note: '', createdAt: db.serverDate() } });
+      }).then(res => {
+        if (!res) return;
+        wx.hideLoading();
+        wx.showToast({ title: '已添加', icon: 'success' });
+        this.setData({ showQuickEdit: false });
+        this._loadEvents();
+      }).catch(() => { wx.hideLoading(); wx.showToast({ title: '操作失败', icon: 'error' }); });
+    } else {
+      wx.cloud.database().collection('events').doc(quickEditEventId).update({
+        data: { targetDate: quickEditDate, targetTime: quickEditTime, updatedAt: wx.cloud.database().serverDate() }
+      }).then(() => {
+        wx.hideLoading();
+        wx.showToast({ title: '已更新', icon: 'success' });
+        this.setData({ showQuickEdit: false });
+        this._loadEvents();
+      }).catch(() => {
+        wx.hideLoading();
+        wx.showToast({ title: '更新失败', icon: 'error' });
+      });
+    }
   },
 
   // Special events
   onAddSpecialEvent(e) {
     const { type } = e.currentTarget.dataset;
     if (type === 'retire') {
-      this.setData({ showRetireSheet: true, retireBirthYear: '', retireBirthMonth: '', retireGender: 'male' });
+      this.setData({ showRetireSheet: true, retireBirthYear: '', retireBirthMonthIdx: 0, retireBirthDayIdx: 0, retireGender: 'male', retireDays: Array.from({length: 31}, (_, i) => `${i+1}日`) });
     } else if (type === 'gaokao') {
       // Auto-add next June 7
       const now = new Date();
@@ -684,32 +708,97 @@ Page({
     if (!app.globalData.isLoggedIn) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
     wx.showLoading({ title: '添加中…', mask: true });
     const db = wx.cloud.database();
-    db.collection('events').add({ data: { name, icon, targetDate, targetTime: targetTime || '00:00', type: 'custom_once', isRecurring: false, note: '', createdAt: db.serverDate() } })
-      .then(() => { wx.hideLoading(); wx.showToast({ title: '已添加', icon: 'success' }); this._loadEvents(); })
-      .catch(() => { wx.hideLoading(); wx.showToast({ title: '添加失败', icon: 'error' }); });
+    db.collection('events').where({ name }).get().then(res => {
+      if (res.data && res.data.length > 0) {
+        wx.hideLoading();
+        wx.showToast({ title: '已有同名事件', icon: 'none' });
+        return;
+      }
+      return db.collection('events').add({ data: { name, icon, targetDate, targetTime: targetTime || '00:00', type: 'custom_once', isRecurring: false, note: '', createdAt: db.serverDate() } });
+    }).then(res => {
+      if (!res) return;
+      wx.hideLoading();
+      wx.showToast({ title: '已添加', icon: 'success' });
+      this._loadEvents();
+    }).catch(() => { wx.hideLoading(); wx.showToast({ title: '添加失败', icon: 'error' }); });
   },
 
   onRetireGenderChange(e) { this.setData({ retireGender: e.currentTarget.dataset.gender }); },
   onRetireBirthYearInput(e) { this.setData({ retireBirthYear: e.detail.value }); },
-  onRetireBirthMonthInput(e) { this.setData({ retireBirthMonth: e.detail.value }); },
+  onRetireMonthChange(e) {
+    const idx = parseInt(e.detail.value);
+    const month = idx + 1;
+    let numDays = 31;
+    if ([4,6,9,11].includes(month)) numDays = 30;
+    else if (month === 2) numDays = 28;
+    const retireDays = Array.from({length: numDays}, (_, i) => `${i+1}日`);
+    const dayIdx = Math.min(this.data.retireBirthDayIdx, numDays - 1);
+    this.setData({ retireBirthMonthIdx: idx, retireDays, retireBirthDayIdx: dayIdx });
+  },
+  onRetireDayChange(e) { this.setData({ retireBirthDayIdx: parseInt(e.detail.value) }); },
   onCancelRetire() { this.setData({ showRetireSheet: false }); },
 
   onConfirmRetire() {
-    const { retireBirthYear, retireBirthMonth, retireGender } = this.data;
+    const { retireBirthYear, retireBirthMonthIdx, retireBirthDayIdx, retireDays, retireGender } = this.data;
     const year = parseInt(retireBirthYear);
-    const month = parseInt(retireBirthMonth);
-    if (!year || year < 1920 || year > 2010) { wx.showToast({ title: '请输入有效出生年份', icon: 'none' }); return; }
-    if (!month || month < 1 || month > 12) { wx.showToast({ title: '请输入有效出生月份(1-12)', icon: 'none' }); return; }
+    if (!year || isNaN(year)) {
+      wx.showToast({ title: '请输入出生年份', icon: 'none' }); return;
+    }
+    const currentYear = new Date().getFullYear();
+    // 来自未来
+    if (year > currentYear) {
+      wx.showModal({ title: '提示', content: '来自未来的新新人类，未来已经实现了共产主义，不需要上班了。', showCancel: false, confirmText: '好的' });
+      return;
+    }
     const retireAge = retireGender === 'male' ? 65 : 60;
     const retireYear = year + retireAge;
-    const targetDate = `${retireYear}-${String(month).padStart(2,'0')}-01`;
-    // Save birth info to user profile
+    // 已退休
+    if (retireYear <= currentYear) {
+      if (year < 1949) {
+        const dynasty = this._getDynasty(year);
+        if (dynasty) {
+          wx.showModal({ title: '提示', content: `从${dynasty}穿越过来的古人，还惦记着上班呀！`, showCancel: false, confirmText: '好的' });
+          return;
+        }
+      }
+      wx.showModal({ title: '提示', content: '您已经不需要工作了，享受生活吧！', showCancel: false, confirmText: '好的' });
+      return;
+    }
+    const month = retireBirthMonthIdx + 1;
+    const day = parseInt(retireDays[retireBirthDayIdx]);
+    const targetDate = `${retireYear}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     if (app.globalData.openid) {
       const db = wx.cloud.database();
-      db.collection('users').where({ _openid: app.globalData.openid }).update({ data: { birthYear: year, birthMonth: month, gender: retireGender, updatedAt: db.serverDate() } }).catch(() => {});
+      db.collection('users').where({ _openid: app.globalData.openid }).update({ data: { birthYear: year, birthMonth: month, birthDay: day, gender: retireGender, updatedAt: db.serverDate() } }).catch(() => {});
     }
     this._saveSpecialEvent('退休', '🏖️', targetDate, '00:00');
     this.setData({ showRetireSheet: false });
+  },
+
+  _getDynasty(year) {
+    const dynasties = [
+      { name: '夏朝', start: -2070, end: -1600 },
+      { name: '商朝', start: -1600, end: -1046 },
+      { name: '西周', start: -1046, end: -771 },
+      { name: '春秋战国时期', start: -771, end: -221 },
+      { name: '秦朝', start: -221, end: -206 },
+      { name: '汉朝', start: -206, end: 220 },
+      { name: '三国时期', start: 220, end: 265 },
+      { name: '晋朝', start: 265, end: 420 },
+      { name: '南北朝', start: 420, end: 589 },
+      { name: '隋朝', start: 581, end: 618 },
+      { name: '唐朝', start: 618, end: 907 },
+      { name: '五代十国', start: 907, end: 960 },
+      { name: '宋朝', start: 960, end: 1279 },
+      { name: '元朝', start: 1271, end: 1368 },
+      { name: '明朝', start: 1368, end: 1644 },
+      { name: '清朝', start: 1644, end: 1912 },
+      { name: '中华民国', start: 1912, end: 1949 },
+    ];
+    for (const d of dynasties) {
+      if (year >= d.start && year < d.end) return d.name;
+    }
+    return null;
   },
 
   onGoCalendar() { wx.navigateTo({ url: '/pages/calendar/calendar' }); },
