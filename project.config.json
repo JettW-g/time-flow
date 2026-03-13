@@ -7,7 +7,7 @@
       { "type": "glob", "value": "miniprogram/images/**" }
     ],
     "include": [
-      { "type": "glob", "value": "miniprogram/images/share_cover.png" }
+      { "type": "glob", "value": "miniprogram/images/share_cover.jpg" }
     ]
   },
   "setting": {

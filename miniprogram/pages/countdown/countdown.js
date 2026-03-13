@@ -171,14 +171,14 @@ Page({
     return {
       title,
       path: '/pages/countdown/countdown',
-      imageUrl: '/images/share_cover.png'
+      imageUrl: '/images/share_cover.jpg'
     };
   },
 
   onShareTimeline() {
     const event = this.data.currentEvent;
     const title = event ? `${event.icon || ''}${event.name} 倒计时` : '时光流转，分秒必争';
-    return { title, imageUrl: '/images/share_cover.png' };
+    return { title, imageUrl: '/images/share_cover.jpg' };
   },
 
   // ========================
