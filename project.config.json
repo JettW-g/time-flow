@@ -6,7 +6,9 @@
     "ignore": [
       { "type": "glob", "value": "miniprogram/images/**" }
     ],
-    "include": []
+    "include": [
+      { "type": "glob", "value": "miniprogram/images/share_cover.png" }
+    ]
   },
   "setting": {
     "coverView": true,
