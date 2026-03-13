@@ -64,21 +64,30 @@ function padZero(n) {
  */
 function getNextWeekendTarget(weekendTime = '18:00') {
   const now = new Date();
-  const day = now.getDay();
+  const day = now.getDay(); // 0=Sun,1=Mon,...,5=Fri,6=Sat
   const [wh, wm] = weekendTime.split(':').map(Number);
-  let daysUntilFri;
-  if (day < 5) {
-    daysUntilFri = 5 - day;
+  let target;
+  if (day === 6) {
+    // 周六：返回昨天（周五）的截止时间 → 倒计时显示0
+    target = new Date(now);
+    target.setDate(now.getDate() - 1);
+    target.setHours(wh, wm, 0, 0);
+  } else if (day === 0) {
+    // 周日：返回前天（周五）的截止时间 → 倒计时显示0
+    target = new Date(now);
+    target.setDate(now.getDate() - 2);
+    target.setHours(wh, wm, 0, 0);
   } else if (day === 5) {
-    const friTarget = new Date(now); friTarget.setHours(wh, wm, 0, 0);
-    daysUntilFri = now >= friTarget ? 7 : 0;
+    // 周五：到达截止时间前倒计时，到达后显示0（返回今天同一截止时间）
+    target = new Date(now);
+    target.setHours(wh, wm, 0, 0);
   } else {
-    daysUntilFri = 5 + 7 - day;
+    // 周一到周四：倒计时到本周五截止时间
+    target = new Date(now);
+    target.setDate(now.getDate() + (5 - day));
+    target.setHours(wh, wm, 0, 0);
   }
-  const friday = new Date(now);
-  friday.setDate(now.getDate() + daysUntilFri);
-  friday.setHours(wh, wm, 0, 0);
-  return { date: formatDate(friday), time: weekendTime };
+  return { date: formatDate(target), time: weekendTime };
 }
 
 /**

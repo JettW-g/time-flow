@@ -422,6 +422,7 @@ Page({
       hDigits:   [zero(), zero()],
       mDigits:   [zero(), zero()],
       sDigits:   [zero(), zero()],
+      dayYMD: '',
       showArrivedOverlay: false,
       showProgressBar: false,
       progressPercent: 0,

@@ -195,8 +195,8 @@
         <text class="close-icon">×</text>
       </view>
     </view>
-    <!-- Sheet tab bar -->
-    <view class="sheet-tab-bar">
+    <!-- Sheet tab bar（仅未来可期 tab 显示） -->
+    <view class="sheet-tab-bar" wx:if="{{activeTab === 'future'}}">
       <view class="sheet-tab-item {{sheetTab === 'active' ? 'sheet-tab-active' : ''}}" bindtap="onSwitchSheetTab" data-tab="active">
         <text class="sheet-tab-text">进行中事件</text>
       </view>
@@ -205,8 +205,8 @@
       </view>
     </view>
     <scroll-view class="sheet-scroll" scroll-y>
-      <!-- 进行中事件 -->
-      <block wx:if="{{sheetTab === 'active'}}">
+      <!-- 进行中事件（过往云烟只显示此部分） -->
+      <block wx:if="{{activeTab === 'past' || sheetTab === 'active'}}">
         <view
           wx:for="{{currentTabEvents}}"
           wx:key="_key"
@@ -236,8 +236,8 @@
           <text class="empty-text">{{activeTab === 'past' ? '暂无历史关注事件' : '暂无未来事件'}}</text>
         </view>
       </block>
-      <!-- 有点特别鸭 -->
-      <block wx:if="{{sheetTab === 'special'}}">
+      <!-- 有点特别鸭（仅未来可期 tab） -->
+      <block wx:if="{{activeTab === 'future' && sheetTab === 'special'}}">
         <view class="special-event-item">
           <view class="special-event-info">
             <text class="special-event-icon">🏖️</text>
