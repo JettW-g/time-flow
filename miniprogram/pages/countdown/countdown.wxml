@@ -219,7 +219,10 @@
               <text class="event-item-date">{{item.targetDate}} {{item.targetTime || '00:00'}}</text>
             </view>
             <view class="event-item-actions">
-              <view class="quick-edit-btn" catchtap="onQuickEditTime" data-id="{{item._id || item.id}}" data-date="{{item.targetDate}}" data-time="{{item.targetTime || '00:00'}}">
+              <view wx:if="{{activeTab === 'past' && (item._id || item.id)}}" class="archive-btn" catchtap="onArchiveEvent" data-id="{{item._id || item.id}}">
+                <text class="archive-btn-text">归档</text>
+              </view>
+              <view wx:if="{{activeTab === 'future'}}" class="quick-edit-btn" catchtap="onQuickEditTime" data-id="{{item._id || item.id}}" data-date="{{item.targetDate}}" data-time="{{item.targetTime || '00:00'}}">
                 <text class="quick-edit-text">调整时间</text>
               </view>
               <view

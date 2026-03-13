@@ -80,8 +80,11 @@ Page({
           // 判断创建时是"过去事件"还是"未来事件"
           const wasOriginallyPast = targetDT < createdDT;
           enriched.wasOriginallyPast = wasOriginallyPast;
-          if (wasOriginallyPast) {
-            // 过去事件：已过去 ≥ 1年则归档
+          if (ev.archived) {
+            // 手动归档
+            enriched.isArchivedPast = true;
+          } else if (wasOriginallyPast) {
+            // 过去事件：已过去 ≥ 1年则自动归档
             enriched.isArchivedPast = (now - targetDT) >= oneYearMs;
           } else {
             // 未来事件：倒计时已到期则归档

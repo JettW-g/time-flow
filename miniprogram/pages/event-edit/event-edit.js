@@ -229,7 +229,19 @@ Page({
     const now = new Date();
     const eventDateTime = new Date(`${targetDate}T${form.time || '00:00'}:00`);
     const isPast = eventDateTime < now;
-    const limit = isPast ? 10 : 20;
+
+    // 过去事件：时间范围不能超过10年前
+    if (isPast) {
+      const tenYearsAgo = new Date();
+      tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+      if (eventDateTime < tenYearsAgo) {
+        this.setData({ isSubmitting: false });
+        wx.showToast({ title: '过去事件不能早于10年前', icon: 'none', duration: 2000 });
+        return;
+      }
+    }
+
+    const limit = isPast ? 5 : 20;
     const limitMsg = isPast
       ? '有些事情，该放下就要放下，向前看'
       : '别给自己太大压力，专注在最重要的事情上，慢慢来';
@@ -244,8 +256,14 @@ Page({
         return;
       }
       const count = allEvents.filter(e => {
+        if (e.archived) return false; // 已归档不计入
         const t = new Date(`${e.targetDate}T${e.targetTime || '00:00'}:00`);
-        return isPast ? t < now : t >= now;
+        if (isPast) {
+          // 过去事件：targetDate < createdAt（原本就是过去事件）
+          const createdAt = e.createdAt ? new Date(e.createdAt) : now;
+          return t < createdAt;
+        }
+        return t >= now;
       }).length;
 
       if (count >= limit) {

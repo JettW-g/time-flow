@@ -300,6 +300,7 @@ Page({
       const oneDayMs = 24 * 60 * 60 * 1000;
       const futureEvents = allEvents.filter(e => {
         if (e.isSystem) return true;
+        if (e.archived) return false; // 已归档，不显示
         const t = new Date(`${e.targetDate}T${e.targetTime || '00:00'}:00`);
         if (t >= now) return true;
         // 宽限期：原本是未来事件（targetDate >= createdAt），到期不超过1天
@@ -311,6 +312,7 @@ Page({
 
       const pastEvents = allEvents.filter(e => {
         if (e.isSystem) return false;
+        if (e.archived) return false; // 已归档，不显示
         const t = new Date(`${e.targetDate}T${e.targetTime || '00:00'}:00`);
         if (t >= now) return false;
         // 未来事件到期后直接归档，不分流到"过去" tab
@@ -852,6 +854,22 @@ Page({
       if (year >= d.start && year < d.end) return d.name;
     }
     return null;
+  },
+
+  onArchiveEvent(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.showLoading({ title: '归档中…', mask: true });
+    wx.cloud.database().collection('events').doc(id).update({
+      data: { archived: true, archivedAt: wx.cloud.database().serverDate() }
+    }).then(() => {
+      wx.hideLoading();
+      wx.showToast({ title: '已归档', icon: 'success' });
+      this.setData({ showEventList: false });
+      this._loadEvents();
+    }).catch(() => {
+      wx.hideLoading();
+      wx.showToast({ title: '归档失败', icon: 'error' });
+    });
   },
 
   onGoCalendar() { wx.navigateTo({ url: '/pages/calendar/calendar' }); },
